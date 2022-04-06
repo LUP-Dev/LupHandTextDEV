@@ -2,18 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.lupworkmanager">
 
-    //CAMARA
     <uses-permission android:name="android.permission.CAMERA" />
-
-    //BLUETOOTH
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
-
-    //AUTO BOOT
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:allowBackup="true"
@@ -22,6 +17,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.LUPWorkManager">
+        <activity
+            android:name=".SesionActivity"
+            android:exported="false" />
         <activity
             android:name=".BluetoothActivity"
             android:exported="false" />
@@ -40,21 +38,19 @@
         <activity
             android:name=".CameraActivity"
             android:exported="true"
-            android:screenOrientation="portrait"
-            />
+            android:screenOrientation="portrait" />
 
-        <receiver android:enabled="true"
+        <receiver
             android:name=".Boot"
-            android:permission="android.permission.RECEIVE_BOOT_COMPLETED"
-            android:exported="false">
-
+            android:enabled="true"
+            android:exported="false"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-
         </receiver>
     </application>
-
 
 </manifest>
