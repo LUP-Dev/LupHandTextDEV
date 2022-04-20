@@ -39,7 +39,7 @@ public class Inicio extends AppCompatActivity {
 
         System.out.println("PERMISOS DADOS");
 
-        Intent intent = new Intent(this, CameraActivity.class);
+        Intent intent = new Intent(this, SesionActivity.class);
         startActivity(intent);
 
     }

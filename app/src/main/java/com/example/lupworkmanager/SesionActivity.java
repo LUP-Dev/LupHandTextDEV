@@ -2,6 +2,7 @@ package com.example.lupworkmanager;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -21,21 +22,26 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Objects;
+
 public class SesionActivity extends AppCompatActivity implements Response.Listener<JSONObject> ,Response.ErrorListener{
 
     Button inicioSesion;
     EditText usuario,password;
-    RequestQueue queue = Volley.newRequestQueue(SesionActivity.this);
+    RequestQueue queue;
 
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Objects.requireNonNull(getSupportActionBar()).hide();
         setContentView(R.layout.activity_sesion);
         inicioSesion = findViewById(R.id.inicioSesion);
         usuario = findViewById(R.id.usuario);
         password = findViewById(R.id.password);
+
+        queue = Volley.newRequestQueue(SesionActivity.this);
 
         inicio();
     }
@@ -53,8 +59,10 @@ public class SesionActivity extends AppCompatActivity implements Response.Listen
     public void onResponse(JSONObject response) {
 
         User user = new User();
-        JSONArray jsonArray = response.optJSONArray("datos");
+        Toast.makeText(this,"Se ha encontrado el usuario " + usuario.getText().toString(), Toast.LENGTH_SHORT).show();
 
+
+        JSONArray jsonArray = response.optJSONArray("datos");
         JSONObject jsonObject = null;
 
         try {
@@ -63,18 +71,22 @@ public class SesionActivity extends AppCompatActivity implements Response.Listen
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
+        Intent inicioApp = new Intent(this,CameraActivity.class);
+        startActivity(inicioApp);
     }
 
     @Override
     public void onErrorResponse(VolleyError error) {
+        System.out.println("ERRORRR" + error.toString());
+        Toast.makeText(this,"Usuario o contraseña incorrectos", Toast.LENGTH_SHORT).show();
 
     }
 
 
-
     private void iniciarSesion(){
         // Instantiate the RequestQueue.
-        String url ="http://ec2-18-132-60-229.eu-west-2.compute.amazonaws.com/ecalvo023/WEB/sesion.php?user="+usuario.getText().toString()+
+        String url ="http://ec2-52-56-170-196.eu-west-2.compute.amazonaws.com/ecalvo023/WEB/sesion.php?user="+usuario.getText().toString()+
                 "&pwd="+password.getText().toString();
 
         JsonRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null,this,this);
