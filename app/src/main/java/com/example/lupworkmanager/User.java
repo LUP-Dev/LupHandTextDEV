@@ -1,15 +1,16 @@
 package com.example.lupworkmanager;
 
-public class User {
+public abstract class User {
 
-    private String usuario,password;
+    private static String usuario;
+    private String password;
 
-    public String getUsuario() {
+    public static String getUsuario() {
         return usuario;
     }
 
-    public void setUsuario(String usuario) {
-        this.usuario = usuario;
+    public static void setUsuario(String usuarioS) {
+        usuario = usuarioS;
     }
 
     public String getPassword() {

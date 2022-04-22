@@ -12,6 +12,7 @@ import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.Voice;
+import android.util.Base64;
 import android.util.Log;
 import android.util.Size;
 import android.view.OrientationEventListener;
@@ -41,6 +42,15 @@ import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.JsonRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -60,12 +70,19 @@ import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.TextRecognizer;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
@@ -74,7 +91,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 
-public class CameraActivity extends AppCompatActivity {
+public class CameraActivity extends AppCompatActivity{
 
     private final Executor executor = Executors.newSingleThreadExecutor();
     Camera camera;
@@ -99,6 +116,9 @@ public class CameraActivity extends AppCompatActivity {
 
     //TIEMPO EJECUCION
     long initialTime;
+
+    //GUARDADO SERVIDOR
+    String fotoen64;
 
 
     MediaPlayer mp ; //Sonido captura
@@ -130,7 +150,6 @@ public class CameraActivity extends AppCompatActivity {
         //INICIO BASE DE DATOS
         dbHelper = new RegistroBDHelper(getApplicationContext());
         dtf4 = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
-
 
         //Inicializar objeto reinicio por si las moscas
         reinicio = new Intent(CameraActivity.this,Inicio.class);
@@ -456,6 +475,15 @@ public class CameraActivity extends AppCompatActivity {
                     System.out.println("CAPTURADO!");
                     Bitmap imagenBitmap = imageProxyToBitmap(image); //PASAMOS LA FOTO A BITMAP
 
+                    //GUARDADO DE IMAGEN EN EL SERVIDOR
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                    imagenBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                    byte[] fototransformada = stream.toByteArray();
+                    fotoen64 = Base64.encodeToString(fototransformada,Base64.DEFAULT);
+
+                    realizarGuardado(fotoen64);
+
+
                     //RECORTAMOS LA IMAGEN (800x600)
 
                     int width=imagenBitmap.getWidth();
@@ -741,4 +769,35 @@ public class CameraActivity extends AppCompatActivity {
         return ahoTTS;
     }
 
+    //METODOS RELACIONADOS CON INSERCCION DE FOTOS EN EL SERVIDOR
+
+
+    private void realizarGuardado(final String foto) {
+        StringRequest stringRequest = new StringRequest(Request.Method.POST,
+                "http://ec2-52-56-170-196.eu-west-2.compute.amazonaws.com/ecalvo023/WEB/imagenes.php",
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        System.out.print(response);
+                        Toast.makeText(getApplicationContext(), "Guardado exitoso", Toast.LENGTH_LONG).show();
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(getApplicationContext(), "ERROR EN EL GUARDADO", Toast.LENGTH_LONG).show();
+            }
+        }){
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> parametros = new Hashtable<String, String>();
+                parametros.put("imagen", foto);
+                parametros.put("user",User.getUsuario());
+
+                return parametros;
+            }
+        };
+
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        requestQueue.add(stringRequest);
+    }
 }

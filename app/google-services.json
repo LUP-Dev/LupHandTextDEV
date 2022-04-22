@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "442169243840",
+    "project_id": "lup-das-2",
+    "storage_bucket": "lup-das-2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:442169243840:android:7368bdb0e2d4b9f9db9525",
+        "android_client_info": {
+          "package_name": "com.example.lupworkmanager"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "442169243840-g56tf1vdmp37qs9o8vs8jsmgntq194d1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSQT6tb2Qy6lM3w_4twnPV7bwiFWCY6Hw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "442169243840-g56tf1vdmp37qs9o8vs8jsmgntq194d1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

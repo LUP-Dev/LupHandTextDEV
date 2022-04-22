@@ -23,10 +23,10 @@ import org.json.JSONObject;
 
 import java.util.Objects;
 
-public class SesionActivity extends AppCompatActivity implements Response.Listener<JSONObject> ,Response.ErrorListener{
+public class registroActivity extends AppCompatActivity implements Response.Listener<JSONObject> ,Response.ErrorListener {
 
-    Button inicioSesion,registro;
-    EditText usuario,password;
+    Button registro;
+    EditText usuario,password,names;
     RequestQueue queue;
 
 
@@ -35,65 +35,46 @@ public class SesionActivity extends AppCompatActivity implements Response.Listen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Objects.requireNonNull(getSupportActionBar()).hide();
-        setContentView(R.layout.activity_sesion);
-        inicioSesion = findViewById(R.id.inicioSesion);
+        setContentView(R.layout.activity_registro);
         registro = findViewById(R.id.preRegistro);
+        names = findViewById(R.id.namesR);
         usuario = findViewById(R.id.usuarioR);
         password = findViewById(R.id.passwordR);
 
-        queue = Volley.newRequestQueue(SesionActivity.this);
+        queue = Volley.newRequestQueue(registroActivity.this);
 
         inicio();
     }
 
     private void inicio(){
-        inicioSesion.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-               iniciarSesion();
-            }
-        });
         registro.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent registro = new Intent(SesionActivity.this, registroActivity.class);
-                startActivity(registro);
+                completarRegistro();
             }
         });
-
     }
 
     @Override
     public void onResponse(JSONObject response) {
 
-        Toast.makeText(this,"Se ha encontrado el usuario " + usuario.getText().toString(), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this,"Se ha registrado el usuario " + usuario.getText().toString(), Toast.LENGTH_SHORT).show();
 
-
-        JSONArray jsonArray = response.optJSONArray("datos");
-        JSONObject jsonObject = null;
-
-        try {
-            jsonObject=jsonArray.getJSONObject(0);
-            User.setUsuario(jsonObject.optString("user"));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        Intent inicioApp = new Intent(this,CameraActivity.class);
+        Intent inicioApp = new Intent(this,SesionActivity.class);
         startActivity(inicioApp);
     }
 
     @Override
     public void onErrorResponse(VolleyError error) {
         System.out.println("ERRORRR" + error.toString());
-        Toast.makeText(this,"Usuario o contraseña incorrectos", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this,"Error en el registro", Toast.LENGTH_SHORT).show();
 
     }
 
 
-    private void iniciarSesion(){
+    private void completarRegistro(){
         // Instantiate the RequestQueue.
-        String url ="http://ec2-52-56-170-196.eu-west-2.compute.amazonaws.com/ecalvo023/WEB/sesion.php?user="+usuario.getText().toString()+
+        String url ="http://ec2-52-56-170-196.eu-west-2.compute.amazonaws.com/ecalvo023/WEB/registrar.php?names="+names.getText().toString()+"&user="+usuario.getText().toString()+
                 "&pwd="+password.getText().toString();
 
         JsonRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null,this,this);
