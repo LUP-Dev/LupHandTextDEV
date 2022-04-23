@@ -124,5 +124,16 @@ public class BDDActivity extends AppCompatActivity {
             dialog.show();
 
         });
+
+        //BOTON GALERIA
+        Button galeria = findViewById(R.id.galeria);
+
+        galeria.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent galeria = new Intent(BDDActivity.this, GaleryActivity.class);
+                startActivity(galeria);
+            }
+        });
     }
 }

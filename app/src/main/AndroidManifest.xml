@@ -19,9 +19,11 @@
         android:theme="@style/Theme.LUPWorkManager"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".GaleryActivity"
+            android:exported="false" />
+        <activity
             android:name=".registroActivity"
             android:exported="false" />
-
         <activity
             android:name=".SesionActivity"
             android:exported="false" />
@@ -45,7 +47,6 @@
             android:exported="true"
             android:screenOrientation="portrait" />
 
-
         <receiver
             android:name=".Boot"
             android:enabled="true"
@@ -61,17 +62,17 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/logo_lup" />
-
-        <meta-data     android:name="com.google.firebase.messaging.default_notification_color"
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/black" />
 
-        <service android:name=".MyFirebaseMessagingService"
+        <service
+            android:name=".MyFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-
     </application>
 
 </manifest>
