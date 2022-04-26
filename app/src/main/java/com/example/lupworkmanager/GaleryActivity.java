@@ -12,7 +12,10 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -40,15 +43,30 @@ public class GaleryActivity extends AppCompatActivity {
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        System.out.println("AQUIIIIIIIIIIIIII");
 
-                        JSONObject jsonObject = null;
+                        JSONArray jsonObject = null;
                         try {
-                            jsonObject = new JSONObject(response);
+                            jsonObject = new JSONArray(response);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
                         System.out.println("OBJECT : "+jsonObject.toString());
+
+                        /*try {
+                            ObjectMapper mapper = new ObjectMapper();
+                            String datos = jsonObject.getString("0");
+
+                            try {
+                                String[] pp1 = mapper.readValue(datos, String[].class);
+                                System.out.println("--FOTOS: " + pp1[0]);
+                            } catch (JsonProcessingException e) {
+                                e.printStackTrace();
+                            }
+
+                            //System.out.println("--FOTOS: " + datos);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }*/
 
                         Toast.makeText(getApplicationContext(), "Imagenes obtenidas", Toast.LENGTH_LONG).show();
                     }

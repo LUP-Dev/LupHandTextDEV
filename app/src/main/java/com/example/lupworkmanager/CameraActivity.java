@@ -205,7 +205,7 @@ public class CameraActivity extends AppCompatActivity{
         },"com.google.android.tts");
 
         //MOSTRAR MOTORES
-        System.out.println("Motores de sintesis : " + textToSpeech.getEngines());
+        //System.out.println("Motores de sintesis : " + textToSpeech.getEngines());
 
         //ARRANCAMOS TTS DE AHOLAB
         ahoTTS = new TextToSpeech(this, status -> {
@@ -223,6 +223,8 @@ public class CameraActivity extends AppCompatActivity{
 
                 Toast.makeText(CameraActivity.this,
                         "AHO TTS NO SE HA ENCONTRADO", Toast.LENGTH_LONG).show();
+
+                startCamera();
 
                 Log.i(TAG, "Error occurred while initializing Text-To-Speech engine");
             }
