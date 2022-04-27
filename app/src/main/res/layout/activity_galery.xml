@@ -6,16 +6,93 @@
     android:layout_height="match_parent"
     tools:context=".GaleryActivity">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="horizontal">
+    <ImageView
+        android:id="@+id/foto2"
+        android:layout_width="150dp"
+        android:layout_height="162dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="32dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/logo_lup" />
 
-        <GridView
-            android:id="@+id/gridView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:numColumns="auto_fit"
-            android:stretchMode="columnWidth" />
-    </LinearLayout>
+    <ImageView
+        android:id="@+id/foto3"
+        android:layout_width="150dp"
+        android:layout_height="162dp"
+        android:layout_marginStart="31dp"
+        android:layout_marginTop="13dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/foto1"
+        app:srcCompat="@drawable/logo_lup" />
+
+    <ImageView
+        android:id="@+id/foto4"
+        android:layout_width="150dp"
+        android:layout_height="162dp"
+        android:layout_marginTop="13dp"
+        android:layout_marginEnd="32dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/foto2"
+        app:srcCompat="@drawable/logo_lup" />
+
+    <ImageView
+        android:id="@+id/foto5"
+        android:layout_width="150dp"
+        android:layout_height="162dp"
+        android:layout_marginStart="31dp"
+        android:layout_marginTop="27dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/foto3"
+        app:srcCompat="@drawable/logo_lup" />
+
+    <ImageView
+        android:id="@+id/foto6"
+        android:layout_width="150dp"
+        android:layout_height="162dp"
+        android:layout_marginTop="27dp"
+        android:layout_marginEnd="32dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/foto4"
+        app:srcCompat="@drawable/logo_lup" />
+
+    <ImageView
+        android:id="@+id/foto1"
+        android:layout_width="150dp"
+        android:layout_height="162dp"
+        android:layout_marginStart="31dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/logo_lup" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="159dp"
+        android:layout_marginTop="14dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/foto5">
+
+        <Button
+            android:id="@+id/btnBackGallery"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="76dp"
+            android:layout_marginTop="36dp"
+            android:backgroundTint="#3F51B5"
+            android:text="Back"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/cargarMas"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="36dp"
+            android:layout_marginEnd="56dp"
+            android:backgroundTint="#00BCD4"
+            android:text="Cargar Mas "
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

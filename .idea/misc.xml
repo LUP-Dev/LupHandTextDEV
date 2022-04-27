@@ -3,9 +3,16 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="app/src/main/res/layout/activity_bddactivity2.xml" value="0.16032608695652173" />
+        <entry key="app/src/main/res/layout/activity_camera.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/activity_galery.xml" value="0.25" />
+        <entry key="app/src/main/res/layout/activity_registro.xml" value="0.25" />
         <entry key="app/src/main/res/layout/activity_sesion.xml" value="0.21" />
         <entry key="app/src/main/res/layout/fragment_sesion.xml" value="0.1" />
         <entry key="app/src/main/res/layout/fragment_sesion2.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/gallery.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/item.xml" value="0.16032608695652173" />
+        <entry key="app/src/main/res/layout/show_images.xml" value="0.153125" />
       </map>
     </option>
   </component>
