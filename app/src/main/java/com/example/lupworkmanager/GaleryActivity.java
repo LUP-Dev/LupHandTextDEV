@@ -58,6 +58,7 @@ public class GaleryActivity extends AppCompatActivity {
 
         Objects.requireNonNull(getSupportActionBar()).hide();
 
+        //IMAGE VIEW DE LAS FOTOS
         foto1 = findViewById(R.id.foto1);
         foto2 = findViewById(R.id.foto2);
         foto3 = findViewById(R.id.foto3);
@@ -72,6 +73,7 @@ public class GaleryActivity extends AppCompatActivity {
 
         getImagenes();
 
+        //BOTON BACK
         back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -80,6 +82,7 @@ public class GaleryActivity extends AppCompatActivity {
             }
         });
 
+        //BOTON CARGAR MAS
         more.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -91,6 +94,7 @@ public class GaleryActivity extends AppCompatActivity {
 
     }
 
+    //METODO PARA OBTENER LAS IMAGENES DEL SERVIDOR
     private void getImagenes() {
         StringRequest stringRequest = new StringRequest(Request.Method.POST,
                 "http://ec2-52-56-170-196.eu-west-2.compute.amazonaws.com/ecalvo023/WEB/selectImagenes.php",
@@ -104,6 +108,7 @@ public class GaleryActivity extends AppCompatActivity {
                             array64 = new JSONArray(response);
                             System.out.println("OBJECT : "+array64.toString());
 
+                            //CONVERTIMOS LAS IMAGENES DEL SERVIDOR A BITMAP Y LAS GUARDAMOS EN UN ARRAY
                             int i = 0;
                             while (i<array64.length()){
                                 JSONObject object = array64.getJSONObject(i);

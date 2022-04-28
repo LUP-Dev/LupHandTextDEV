@@ -90,6 +90,7 @@ public class SesionActivity extends AppCompatActivity implements Response.Listen
 
     }
 
+    //METODO RESPONSABLE DE MANDAR LA INFORMACION AL SERVIDOR PARA PROCEDER AL LOGEO DEL USUARIO
 
     private void iniciarSesion(){
         // Instantiate the RequestQueue.

@@ -71,7 +71,7 @@ public class registroActivity extends AppCompatActivity implements Response.List
 
     }
 
-
+    //METODO RESPONSABLE DE MANDAR LA INFORMACION AL SERVIDOR PARA PROCEDER AL REGISTRO DEL USUARIO
     private void completarRegistro(){
         // Instantiate the RequestQueue.
         String url ="http://ec2-52-56-170-196.eu-west-2.compute.amazonaws.com/ecalvo023/WEB/registrar.php?names="+names.getText().toString()+"&user="+usuario.getText().toString()+

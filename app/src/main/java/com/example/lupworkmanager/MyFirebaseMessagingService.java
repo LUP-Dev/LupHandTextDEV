@@ -45,6 +45,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         }
     }
 
+    //METODO QUE RECIBE LA SEÑAL Y MUESTRA UNA NOTIFICACION POR PANTALLA
     private void enviarNotificacion(RemoteMessage remoteMessage) {
         Map<String, String> data = remoteMessage.getData();
         String title = data.get("title");
@@ -104,6 +105,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         enviarTokenToServer(token);
     }
 
+    //CADA VEZ QUE INICIEMOS LA APP SE REGISTRA UN TOKEN
     private void enviarTokenToServer(final String token) {
         StringRequest stringRequest = new StringRequest(Request.Method.POST,
                 "http://ec2-52-56-170-196.eu-west-2.compute.amazonaws.com/ecalvo023/WEB/registrarToken.php",
