@@ -327,42 +327,13 @@ public class CameraActivity extends AppCompatActivity{
                     System.out.println("CAPTURADO!");
                     Bitmap imagenBitmap = imageProxyToBitmap(image); //PASAMOS LA FOTO A BITMAP
 
-                    //GUARDADO DE IMAGEN EN EL SERVIDOR
-                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                    imagenBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
-                    byte[] fototransformada = stream.toByteArray();
-                    fotoen64 = Base64.encodeToString(fototransformada,Base64.DEFAULT);
-
-
-                    //RECORTAMOS LA IMAGEN (800x600)
-
-                    int width=imagenBitmap.getWidth();
-                    int height=imagenBitmap.getHeight();
-
-                    //Cogemos el centro de la imagen
-                    int centerX=width/2;
-                    int centerY=height/2;
-
-                    //En el caso de que haya algun problema con el recorte que coja la foto original.
-                    /*Bitmap recortado;
-                    try {
-                        recortado = Bitmap.createBitmap(imagenBitmap, centerX ,centerY-200, 0, 0);
-                    }catch (Exception e){
-                        System.out.println("Problema con el recorte del bitmap");
-                        recortado = imagenBitmap;
-                    }
-
-                    Bitmap finalRecortado = recortado; */
-
-                    Bitmap finalRecortado = imagenBitmap;
-
                     runOnUiThread(() -> {
                         // TODO Auto-generated method stub
                         imageView.setRotation(90); //EN PC SE VE GIRADO PERO EN MOVIL EN VERTICAL
-                        imageView.setImageBitmap(finalRecortado); //SETEAMOS FOTO TOMADA
+                        imageView.setImageBitmap(imagenBitmap); //SETEAMOS FOTO TOMADA
                     });
 
-                    imagen = InputImage.fromBitmap(finalRecortado , 90); //
+                    imagen = InputImage.fromBitmap(imagenBitmap , 90); //
 
                     // COMIENZA DETECCION DE TEXTO EN IMAGEN (OCR)
 
