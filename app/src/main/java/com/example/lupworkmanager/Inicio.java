@@ -18,7 +18,6 @@ public class Inicio extends AppCompatActivity {
 
     private final int REQUEST_CODE_PERMISSIONS = 1001;
 
-    RegistroBDHelper dbHelper = new RegistroBDHelper(this);
 
     //CLASE DE PANTALLA INICIO + PERMISOS
 
@@ -26,8 +25,6 @@ public class Inicio extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         Objects.requireNonNull(getSupportActionBar()).hide();
         setContentView(R.layout.activity_inicio);
-
-        borrarBaseDeDatos(); //BORRAR BASE DE DATOS AL INICIAR LA APP
 
         //PEDIR PERMISOS
         while(!allPermissionsGranted()){
@@ -39,7 +36,7 @@ public class Inicio extends AppCompatActivity {
 
         System.out.println("PERMISOS DADOS");
 
-        Intent intent = new Intent(this, SesionActivity.class);
+        Intent intent = new Intent(this, CameraActivity.class);
         startActivity(intent);
 
     }
@@ -64,10 +61,6 @@ public class Inicio extends AppCompatActivity {
                 //this.finish();
             }
         }
-    }
-
-    private void borrarBaseDeDatos(){
-        dbHelper.deleteAll();
     }
 
 
