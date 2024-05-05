@@ -70,6 +70,21 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import org.opencv.core.Mat;
+import org.opencv.android.Utils;
+import org.opencv.imgproc.Imgproc;
+import org.opencv.objdetect.CascadeClassifier;
+import org.opencv.core.MatOfRect;
+//import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+
+import java.io.File;
+import java.io.InputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+
+// Importa cualquier otra clase que necesites de OpenCV
 
 public class CameraActivity extends AppCompatActivity{
 
@@ -116,65 +131,122 @@ public class CameraActivity extends AppCompatActivity{
     //BDD
     DateTimeFormatter dtf4;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Objects.requireNonNull(getSupportActionBar()).hide();
 
-        //INICIO BASE DE DATOS
+        // Asegúrate de que estás cargando el layout correcto aquí
+        setContentView(R.layout.activity_camera); // Asegúrate de que este es el layout correcto que contiene mPreviewView
+
+        // Inicialización de vistas después de cargar el layout correcto
+        mPreviewView = findViewById(R.id.camera); // Asegúrate de que el ID es correcto
+        captura = findViewById(R.id.capturar);
+        stop = findViewById(R.id.stop);
+        imageView = findViewById(R.id.imageView);
+        progressBar = findViewById(R.id.progressBar2);
+        atras = findViewById(R.id.atras);
+        next = findViewById(R.id.next);
+        pause = findViewById(R.id.pause);
+
+        // Otros inicializadores
+        mp = MediaPlayer.create(this, R.raw.captura);
         dtf4 = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
-
-        //Inicializar objeto reinicio por si las moscas
-        reinicio = new Intent(CameraActivity.this,Inicio.class);
-
-        //GIRO DE PANTALLA
+        reinicio = new Intent(CameraActivity.this, Inicio.class);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
 
-        //SE SETEA EL CONTENT VIEW HASTA QUE SE CARGEN LOS COMPONENTES NECESARIOS
-        setContentView(R.layout.activity_inicio);
+        initializeTextToSpeech();
+        if (!loadCascadeFile()) {
+            Toast.makeText(this, "No se pudo cargar el clasificador de cascada.", Toast.LENGTH_LONG).show();
+            finish(); // Salir de la actividad si no se carga el clasificador
+        }
+        startCamera();
+    }
 
-        //SONIDO DE CAPTURA INICIALIZACION
-        mp = MediaPlayer.create(this,R.raw.captura);
-
-
-        // ARRANCAMOS LANGUAJE DETECTION
-        LanguageIdentificationOptions identifierOptions =
-                new LanguageIdentificationOptions.Builder()
-                        .setConfidenceThreshold(0.8f)  //SOLO TENER EN CUENTA SI TIENE MAS DE X % DE PERTENECER
-                        .build();
-
-        languageIdentifier = LanguageIdentification
-                .getClient(identifierOptions);
-
-
-        //ARRANCAMOS TTS DE GOOGLE
+    private void initializeTextToSpeech() {
         textToSpeech = new TextToSpeech(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
                 Log.i(TAG, "Text-To-Speech engine is initialized");
             } else if (status == TextToSpeech.ERROR) {
-                Log.i(TAG, "Error occurred while initializing Text-To-Speech engine");
+                Log.e(TAG, "Error occurred while initializing Text-To-Speech engine");
             }
-        },"com.google.android.tts");
-
-        startCamera();
+        }, "com.google.android.tts");
     }
 
-    private void startCamera() {  //EMPIEZA LA EJECUCION DESPUES DE ARRANCAR LOS SERVICIOS NECESARIOS
-
-        //EMPEZAMOS ARRANCANDO LA CAMARA
-
+    private void startCamera() {
         final ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
-
         cameraProviderFuture.addListener(() -> {
             try {
                 ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-                start(cameraProvider);  //LLAMAR A ScanWorker
+                bindCameraUseCases(cameraProvider);
             } catch (ExecutionException | InterruptedException e) {
-                // No errors need to be handled for this Future.
-                // This should never be reached.
+                Log.e(TAG, "Error starting camera", e);
             }
         }, ContextCompat.getMainExecutor(this));
+    }
+
+    private void bindCameraUseCases(ProcessCameraProvider cameraProvider) {
+        CameraSelector cameraSelector = new CameraSelector.Builder()
+                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                .build();
+
+        Preview preview = new Preview.Builder()
+                .build();
+        preview.setSurfaceProvider(mPreviewView.getSurfaceProvider());
+
+        ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
+                .setTargetResolution(new Size(1280, 720))
+                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                .build();
+
+        imageAnalysis.setAnalyzer(executor, this::analyzeImage);
+
+        cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalysis);
+    }
+
+    private void analyzeImage(@NonNull ImageProxy image) {
+        @SuppressLint("UnsafeOptInUsageError") Bitmap bitmap = imageProxyToBitmap(image);
+        if (bitmap != null) {
+            Mat mat = new Mat();
+            Utils.bitmapToMat(bitmap, mat);
+
+            // Convertir a escala de grises
+            Mat grayMat = new Mat();
+            Imgproc.cvtColor(mat, grayMat, Imgproc.COLOR_RGB2GRAY);
+
+            // Detectar manos
+            MatOfRect handDetections = new MatOfRect();
+            if (handDetector != null) {
+                handDetector.detectMultiScale(grayMat, handDetections);
+            }
+
+            // Dibujar rectángulos alrededor de las manos detectadas
+            for (org.opencv.core.Rect rect : handDetections.toArray()) {
+                Imgproc.rectangle(mat, rect.tl(), rect.br(), new Scalar(255, 0, 0), 2);
+            }
+
+            // Convertir de vuelta a Bitmap para mostrar en ImageView
+            final Bitmap processedBitmap = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(mat, processedBitmap);
+
+            runOnUiThread(() -> imageView.setImageBitmap(processedBitmap));
+
+            grayMat.release();
+            mat.release();
+            image.close();
+        }
+    }
+
+
+    private Mat processFrame(Mat inputMat) {
+        Mat grayMat = new Mat();
+        Imgproc.cvtColor(inputMat, grayMat, Imgproc.COLOR_RGB2GRAY);
+        // Aplica más procesamientos como detección de bordes, etc.
+        return grayMat;  // Retorna el Mat procesado
+    }
+
+    private void detectObjects(Mat frame) {
+        // Aplica algoritmos de OpenCV aquí, por ejemplo, detección de bordes, contornos, etc.
     }
 
     @SuppressLint("RestrictedApi")
@@ -527,6 +599,44 @@ public class CameraActivity extends AppCompatActivity{
             }
         });
 
+    }
+
+    private CascadeClassifier handDetector;
+
+    private boolean loadCascadeFile() {
+        try {
+            // Cargar el archivo de cascada desde los recursos.
+            InputStream is = getResources().openRawResource(R.raw.haarcascade_hand); // Asegúrate de que el archivo se llame así en `res/raw`
+            File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
+            File cascadeFile = new File(cascadeDir, "hand_cascade.xml");
+            FileOutputStream os = new FileOutputStream(cascadeFile);
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = is.read(buffer)) != -1) {
+                os.write(buffer, 0, bytesRead);
+            }
+            is.close();
+            os.close();
+
+            // Cargar el clasificador de cascada
+            handDetector = new CascadeClassifier(cascadeFile.getAbsolutePath());
+            if (handDetector.empty()) {
+                Log.e(TAG, "Failed to load cascade classifier");
+                handDetector = null;
+                return false;
+            } else {
+                Log.i(TAG, "Loaded cascade classifier from " + cascadeFile.getAbsolutePath());
+            }
+
+            cascadeDir.delete(); // Opcional: eliminar el directorio una vez que el clasificador ha sido cargado
+
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.e(TAG, "Failed to load cascade. Exception thrown: " + e);
+        }
+        return false;
     }
 
 }

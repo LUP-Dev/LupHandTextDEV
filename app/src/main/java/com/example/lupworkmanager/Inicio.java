@@ -10,11 +10,22 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.util.Log;
+import android.widget.Toast;
+
 import java.util.Objects;
 
 public class Inicio extends AppCompatActivity {
 
-    private final String[] REQUIRED_PERMISSIONS = new String[]{"android.permission.CAMERA"};
+    private final String[] REQUIRED_PERMISSIONS = new String[]{
+            "android.permission.CAMERA",
+            "android.permission.BLUETOOTH",
+            "android.permission.BLUETOOTH_ADMIN",
+            "android.permission.BLUETOOTH_CONNECT",
+            "android.permission.BLUETOOTH_ADVERTISE",
+            "android.permission.INTERNET",
+            "android.permission.RECEIVE_BOOT_COMPLETED"
+    };
 
     private final int REQUEST_CODE_PERMISSIONS = 1001;
 
@@ -23,28 +34,25 @@ public class Inicio extends AppCompatActivity {
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Objects.requireNonNull(getSupportActionBar()).hide();
         setContentView(R.layout.activity_inicio);
-
-        //PEDIR PERMISOS
-        while(!allPermissionsGranted()){
-
-            System.out.println("PIDIENDO PERMISOS ");
-            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
-
-        }
-
-        System.out.println("PERMISOS DADOS");
-
-        Intent intent = new Intent(this, CameraActivity.class);
-        startActivity(intent);
-
+        Log.d("InicioActivity", "Solicitando permisos...");
+        requestPermissions();
     }
 
-    private boolean allPermissionsGranted(){
+    private void requestPermissions() {
+        if (!allPermissionsGranted()) {
+            Log.d("InicioActivity", "No todos los permisos han sido otorgados, solicitando...");
+            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
+        } else {
+            Log.d("InicioActivity", "Todos los permisos otorgados, lanzando CameraActivity...");
+            launchCameraActivity();
+        }
+    }
 
-        for(String permission : REQUIRED_PERMISSIONS){
-            if(ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED){
+    private boolean allPermissionsGranted() {
+        for (String permission : REQUIRED_PERMISSIONS) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                Log.d("InicioActivity", "Permiso no concedido: " + permission);
                 return false;
             }
         }
@@ -55,12 +63,19 @@ public class Inicio extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
-
+                Log.d("InicioActivity", "Permisos concedidos después de la solicitud.");
+                launchCameraActivity();
             } else {
-                //Toast.makeText(this, "Permissions not granted by the user.", Toast.LENGTH_SHORT).show();
-                //this.finish();
+                Log.e("InicioActivity", "Permisos no concedidos por el usuario.");
+                Toast.makeText(this, "Permissions not granted by the user.", Toast.LENGTH_SHORT).show();
+                finish();
             }
         }
+    }
+
+    private void launchCameraActivity() {
+        Intent intent = new Intent(this, CameraActivity.class);
+        startActivity(intent);
     }
 
 
