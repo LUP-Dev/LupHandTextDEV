@@ -56,6 +56,31 @@
         app:layout_constraintStart_toEndOf="@+id/capturar"
         app:layout_constraintTop_toBottomOf="@+id/pause" />
 
+    <Switch
+        android:id="@+id/switchFlash"
+        android:layout_width="65dp"
+        android:layout_height="37dp"
+        android:layout_centerHorizontal="true"
+        android:checked="false"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/imageView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/capturar" />
+
+    <TextView
+        android:id="@+id/text_flash"
+        android:layout_width="69dp"
+        android:layout_height="27dp"
+        android:layout_margin="16dp"
+        android:text="Linterna"
+        android:textAlignment="center"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="@+id/switchFlash"
+        app:layout_constraintEnd_toStartOf="@+id/imageView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/capturar" />
+
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="176dp"
@@ -94,21 +119,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <View
-            android:id="@+id/rectangleView"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_margin="150dp"
-            android:background="@drawable/border_black"
-            android:foreground="?android:attr/selectableItemBackgroundBorderless"
-            android:foregroundGravity="center"
-            android:outlineAmbientShadowColor="@android:color/transparent"
-            android:outlineSpotShadowColor="@android:color/transparent"
-            app:layout_constraintBottom_toBottomOf="@id/camera"
-            app:layout_constraintEnd_toEndOf="@id/camera"
-            app:layout_constraintStart_toStartOf="@id/camera"
-            app:layout_constraintTop_toTopOf="@id/camera" />
+
     </androidx.camera.view.PreviewView>
+
+    <View
+        android:id="@+id/color_bubble"
+        android:layout_width="122dp"
+        android:layout_height="122dp"
+        android:layout_margin="16dp"
+        android:background="@drawable/circle_background"
+        app:layout_constraintBottom_toBottomOf="@+id/camera"
+        app:layout_constraintEnd_toEndOf="@+id/camera" />
 
     <ProgressBar
         android:id="@+id/progressBar2"

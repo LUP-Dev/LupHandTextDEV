@@ -7,6 +7,7 @@ import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
@@ -18,6 +19,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -56,6 +58,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -80,7 +84,6 @@ public class CameraActivity extends AppCompatActivity {
     Button next;
     Button pause;
     Button historial;
-    View visor;
     ImageView imageView;
     PreviewView mPreviewView;
     Intent reinicio;
@@ -91,7 +94,7 @@ public class CameraActivity extends AppCompatActivity {
     //GUARDADO SERVIDOR
     String fotoen64;
 
-    Switch modo;
+    Switch modo, flash;
     MediaPlayer mp; //Sonido captura
     LanguageIdentifier languageIdentifier;
     //BDD
@@ -99,6 +102,12 @@ public class CameraActivity extends AppCompatActivity {
     private InputImage imagen;
     private int contador = 0;
 
+    private int centralPixelColor;
+    private Timer timer;
+    TextView textoLinterna;
+
+    View burbuja;
+    private ImageCapture imageCapture;
 
     //OCULTAR BOTONES OCULTOS
     private static void showWorkFinished() {
@@ -119,7 +128,7 @@ public class CameraActivity extends AppCompatActivity {
         reinicio = new Intent(CameraActivity.this, Inicio.class);
 
         //GIRO DE PANTALLA
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
 
         //SE SETEA EL CONTENT VIEW HASTA QUE SE CARGEN LOS COMPONENTES NECESARIOS
         setContentView(R.layout.activity_inicio);
@@ -187,7 +196,7 @@ public class CameraActivity extends AppCompatActivity {
         AtomicReference<ImageCapture.Builder> builder = new AtomicReference<>(new ImageCapture.Builder());
 
         //SET DE CONFIGURACION DE CAPTURA
-        ImageCapture imageCapture = builder.get()
+        imageCapture = builder.get()
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
                 //.setTargetRotation(view.getDisplay().getRotation())
                 .setFlashMode(ImageCapture.FLASH_MODE_AUTO)
@@ -224,9 +233,14 @@ public class CameraActivity extends AppCompatActivity {
 
         color = findViewById(R.id.color);
         color.setVisibility(View.INVISIBLE);
-        visor = findViewById(R.id.rectangleView);
-        visor.setVisibility(View.INVISIBLE);
         modo = findViewById(R.id.switchModo);
+
+        flash = findViewById(R.id.switchFlash);
+        textoLinterna = findViewById(R.id.text_flash);
+        flash.setVisibility(View.INVISIBLE);
+        textoLinterna.setVisibility(View.INVISIBLE);
+        burbuja = findViewById(R.id.color_bubble);
+        burbuja.setVisibility(View.INVISIBLE);
 
         stop = findViewById(R.id.stop);
         imageView = findViewById(R.id.imageView);
@@ -298,12 +312,35 @@ public class CameraActivity extends AppCompatActivity {
                 color.setVisibility(View.VISIBLE);
                 captura.setVisibility(View.INVISIBLE);
                 camera.getCameraControl().setLinearZoom(0.75f);
-                visor.setVisibility(View.VISIBLE);
+                flash.setVisibility(View.VISIBLE);
+                textoLinterna.setVisibility(View.VISIBLE);
+                burbuja.setVisibility(View.VISIBLE);
+                GradientDrawable drawable = (GradientDrawable) burbuja.getBackground();
+                drawable.setColor(Color.WHITE);
+                imageCapture.setFlashMode(ImageCapture.FLASH_MODE_OFF);
+                imageView.setVisibility(View.INVISIBLE);
+                startImageUpdateTimer();
+
             } else {
                 captura.setVisibility(View.VISIBLE);
                 color.setVisibility(View.INVISIBLE);
                 camera.getCameraControl().setLinearZoom(0f);
-                visor.setVisibility(View.INVISIBLE);
+                flash.setVisibility(View.INVISIBLE);
+                textoLinterna.setVisibility(View.INVISIBLE);
+                imageCapture.setFlashMode(ImageCapture.FLASH_MODE_AUTO);
+                imageView.setVisibility(View.VISIBLE);
+                burbuja.setVisibility(View.INVISIBLE);
+                stopImageUpdateTimer();
+            }
+        });
+
+        flash.setOnClickListener(v -> {
+            if (modo.isChecked()) {
+                imageCapture.setFlashMode(ImageCapture.FLASH_MODE_ON);
+                camera.getCameraControl().enableTorch(true);
+            } else {
+                imageCapture.setFlashMode(ImageCapture.FLASH_MODE_OFF);
+                camera.getCameraControl().enableTorch(false);
             }
         });
 
@@ -450,90 +487,91 @@ public class CameraActivity extends AppCompatActivity {
             // Inicia la captura de imagen automáticamente al presionar el botón "color"
 
             initialTime = System.currentTimeMillis(); // INICIO TIEMPO DE EJECUCION
-
-            mp.start(); // Sonido captura
-
-            System.out.println("CAPTURANDO!");
-
-            imageCapture.takePicture(executor, new ImageCapture.OnImageCapturedCallback() {
-                @Override
-                public void onCaptureSuccess(@NonNull ImageProxy image) {
-                    // Procesa la imagen capturada
-                    Bitmap imagenBitmap = imageProxyToBitmap(image);
-                    // Cierra la imagen para liberar recursos
-                    image.close();
-
-                    runOnUiThread(() -> {
-                        // TODO Auto-generated method stub
-                        imageView.setRotation(90); //EN PC SE VE GIRADO PERO EN MOVIL EN VERTICAL
-                        imageView.setImageBitmap(imagenBitmap); //SETEAMOS FOTO TOMADA
-                    });
-
-                    calcularYDecirColor(imagenBitmap);
-                    progressBar.setVisibility(View.INVISIBLE);
-                }
+            calcularYDecirColor();
+            progressBar.setVisibility(View.INVISIBLE);
 
 
-                @Override
-                public void onError(@NonNull ImageCaptureException error) {
-                    // Maneja el error en caso de que la captura de imagen falle
-                    error.printStackTrace();
-                    // Puedes mostrar un mensaje de error o realizar otras acciones según sea necesario
-                    Toast.makeText(CameraActivity.this, "Error al capturar la imagen", Toast.LENGTH_SHORT).show();
-                }
-            });
         });
+    }
 
+    // Método para capturar la imagen y actualizar la ImageView
+    private void captureAndDisplayImage() {
 
+        imageCapture.takePicture(executor, new ImageCapture.OnImageCapturedCallback() {
+            @Override
+            public void onCaptureSuccess(@NonNull ImageProxy image) {
+                // Procesa la imagen capturada
+                Bitmap imagenBitmap = imageProxyToBitmap(image);
+                // Cierra la imagen para liberar recursos
+                image.close();
+
+                // Escalar la imagen para que coincida con las dimensiones de la ImageView
+                int targetWidth = burbuja.getWidth();
+                int targetHeight = burbuja.getHeight();
+                Bitmap scaledBitmap = Bitmap.createScaledBitmap(imagenBitmap, targetWidth, targetHeight, true);
+
+                // Extraer el color del píxel central de la imagen escalada
+                centralPixelColor = scaledBitmap.getPixel(targetWidth / 2, targetHeight / 2);
+
+                runOnUiThread(() -> {
+                    // Establece el color de fondo de la ImageView con el color del píxel central
+
+                    GradientDrawable drawable = (GradientDrawable) burbuja.getBackground();
+                    drawable.setColor(centralPixelColor);
+                });
+            }
+
+            @Override
+            public void onError(@NonNull ImageCaptureException error) {
+                // Maneja el error en caso de que la captura de imagen falle
+                error.printStackTrace();
+                // Puedes mostrar un mensaje de error o realizar otras acciones según sea necesario
+                Toast.makeText(CameraActivity.this, "Error al capturar la imagen", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // Método para iniciar el temporizador y actualizar la imagen cada cierto intervalo de tiempo
+    private void startImageUpdateTimer() {
+        timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                // Lógica para capturar una imagen y actualizar la ImageView
+                captureAndDisplayImage();
+            }
+        }, 0, 50); // Intervalo de actualización en milisegundos (en este caso, cada segundo)
+    }
+
+    // Método para detener el temporizador
+    private void stopImageUpdateTimer() {
+        if (timer != null) {
+            timer.cancel();
+            timer = null;
+        }
     }
 
 
-    private void calcularYDecirColor(Bitmap imagenBitmap) {
+    private void calcularYDecirColor() {
 
         // Pronuncia la etiqueta de color utilizando el motor de texto a voz (TTS)
-        pronunciarTexto(obtenerColorMedio(imagenBitmap));
+        pronunciarTexto(obtenerColor());
     }
 
     // Método para calcular el color promedio de una imagen
-    private String obtenerColorMedio(Bitmap imagenBitmap) {
+    private String obtenerColor() {
 
-        // Calcula las coordenadas del centro de la imagen
-        int centroX = imagenBitmap.getWidth() / 2;
-        int centroY = imagenBitmap.getHeight() / 2;
 
-        // Variables para almacenar la suma de los componentes de color
-        int sumaRojo = 0;
-        int sumaVerde = 0;
-        int sumaAzul = 0;
+        // Obtiene los componentes de color individuales
+        int rojo = Color.red(centralPixelColor);
+        int verde = Color.green(centralPixelColor);
+        int azul = Color.blue(centralPixelColor);
 
-        // Recorre los píxeles alrededor del centro de la imagen
-        for (int x = -2; x <= 2; x++) {
-            for (int y = -2; y <= 2; y++) {
-                // Obtén el color del píxel en la posición (x, y)
-                int colorPixel = imagenBitmap.getPixel(centroX + x, centroY + y);
-
-                // Obtiene los componentes de color individuales
-                int rojo = Color.red(colorPixel);
-                int verde = Color.green(colorPixel);
-                int azul = Color.blue(colorPixel);
-
-                // Suma los componentes de color
-                sumaRojo += rojo;
-                sumaVerde += verde;
-                sumaAzul += azul;
-            }
-        }
-
-        // Calcula el color promedio
-
-        int promedioRojo = sumaRojo / 25;
-        int promedioVerde = sumaVerde / 25;
-        int promedioAzul = sumaAzul / 25;
 
         // Combina los componentes de color para obtener el color promedio
 
 
-        return queColorEs(promedioRojo, promedioVerde, promedioAzul);
+        return queColorEs(rojo, verde, azul);
     }
 
 
@@ -541,38 +579,70 @@ public class CameraActivity extends AppCompatActivity {
 
         Map<String, int[]> colores = new HashMap<>();
 
+        //ORIGINALES
+//        colores.put("Negro", new int[]{30, 30, 30});
+//        colores.put("Blanco", new int[]{230, 220, 210});
+//        colores.put("Gris", new int[]{70, 70, 70});
+//        colores.put("Rojo", new int[]{200, 40, 40});
+//        colores.put("Verde", new int[]{94, 200, 40});
+//        colores.put("Azul", new int[]{40, 40, 200});
+//        colores.put("Amarillo", new int[]{190, 190, 40});
+//        colores.put("Naranja", new int[]{255, 125, 0});
+//        colores.put("Violeta", new int[]{150, 40, 200});
+//        colores.put("Marrón", new int[]{130, 70, 20});
         // Define los colores básicos y sus valores RGB
-        colores.put("Negro", new int[]{30, 30, 30});
-        colores.put("Blanco", new int[]{230, 220, 210});
-        colores.put("Gris", new int[]{70, 70, 70});
-        colores.put("Rojo", new int[]{200, 40, 40});
-        colores.put("Verde", new int[]{94, 200, 40});
-        colores.put("Azul", new int[]{40, 40, 200});
-        colores.put("Amarillo", new int[]{190, 190, 40});
-        colores.put("Naranja", new int[]{180, 110, 40});
-        colores.put("Violeta", new int[]{150, 40, 200});
-        colores.put("Marrón", new int[]{130, 70, 20});
-        // Puedes añadir más colores según sea necesario
+        colores.put("Negro", new int[]{0, 0, 0});
+        colores.put("Blanco", new int[]{255, 255, 255});
+        colores.put("Gris", new int[]{128, 128, 128});
+        colores.put("Rojo oscuro", new int[]{139, 0, 0});
+        colores.put("Rojo", new int[]{255, 0, 0});
+        colores.put("Rojo claro", new int[]{255, 69, 0});
+        colores.put("Verde oscuro", new int[]{0, 100, 0});
+        colores.put("Verde", new int[]{0, 128, 0});
+        colores.put("Verde claro", new int[]{144, 238, 144});
+        colores.put("Azul oscuro", new int[]{0, 0, 139});
+        colores.put("Azul", new int[]{0, 0, 255});
+        colores.put("Azul claro", new int[]{173, 216, 230});
+        colores.put("Amarillo oscuro", new int[]{184, 134, 11});
+        colores.put("Amarillo", new int[]{255, 255, 0});
+        colores.put("Amarillo claro", new int[]{255, 255, 224});
+        colores.put("Naranja oscuro", new int[]{255, 140, 0});
+        colores.put("Naranja", new int[]{255, 165, 0});
+        colores.put("Naranja claro", new int[]{255, 218, 185});
+        colores.put("Violeta oscuro", new int[]{148, 0, 211});
+        colores.put("Violeta", new int[]{238, 130, 238});
+        colores.put("Violeta claro", new int[]{230, 230, 250});
+        colores.put("Marrón oscuro", new int[]{139, 69, 19});
+        colores.put("Marrón", new int[]{165, 42, 42});
+        colores.put("Marrón claro", new int[]{205, 133, 63});
+        colores.put("Rosado oscuro", new int[]{255, 20, 147});
+        colores.put("Rosado", new int[]{255, 192, 203});
+        colores.put("Rosado claro", new int[]{255, 182, 193});
+        colores.put("Gris claro", new int[]{211, 211, 211});
+        colores.put("Gris perla", new int[]{224, 224, 224});
+        colores.put("Gris oscuro", new int[]{105, 105, 105});
 
-        double distanciaMinima = Double.MAX_VALUE;
+
+        double distanciaMinimaCuadrada = Double.MAX_VALUE;
         String nombreColorMasCercano = "Desconocido";
 
-        // Itera sobre los colores para encontrar el más cercano
+// Itera sobre los colores para encontrar el más cercano
         for (Map.Entry<String, int[]> entry : colores.entrySet()) {
             String nombreColor = entry.getKey();
             int[] color = entry.getValue();
 
-            // Calcula la distancia euclidiana entre el color dado y el color actual
-            double distancia = Math.sqrt(Math.pow(rojo - color[0], 2) + Math.pow(verde - color[1], 2) + Math.pow(azul - color[2], 2));
+            // Calcula la distancia euclidiana al cuadrado entre el color dado y el color actual
+            double distanciaCuadrada = Math.pow(rojo - color[0], 2) + Math.pow(verde - color[1], 2) + Math.pow(azul - color[2], 2);
 
             // Comprueba si esta distancia es menor que la mínima encontrada hasta ahora
-            if (distancia < distanciaMinima) {
-                distanciaMinima = distancia;
+            if (distanciaCuadrada < distanciaMinimaCuadrada) {
+                distanciaMinimaCuadrada = distanciaCuadrada;
                 nombreColorMasCercano = nombreColor;
             }
         }
 
         return nombreColorMasCercano;
+
     }
 
 
