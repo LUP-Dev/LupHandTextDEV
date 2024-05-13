@@ -363,7 +363,7 @@ public class CameraActivity extends AppCompatActivity {
                                     Locale locale = new Locale(idioma, "ES"); //CREAMOS LOCALE PARA ASIGNAR IDIOMA A TTS
 
                                     //SI OCR NO DETECTA NINGUN CARACTER
-                                    if (texto.equals("")) {
+                                    if (texto.isEmpty()) {
                                         textToSpeech.setLanguage(new Locale("es", "ES"));
                                         System.out.println("ENTRA DENTRO DE SPEAK SIN TEXTO");
                                         textToSpeech.speak("No se ha detectado texto", TextToSpeech.QUEUE_FLUSH, null, null);
@@ -489,16 +489,13 @@ public class CameraActivity extends AppCompatActivity {
 
 
     private void calcularYDecirColor(Bitmap imagenBitmap) {
-        // Calcula el color promedio de la imagen
-        int color = obtenerColorMedio(imagenBitmap);
 
-        // Asigna una etiqueta de color basada en el color
         // Pronuncia la etiqueta de color utilizando el motor de texto a voz (TTS)
-        pronunciarTexto(sacarColoresRGB(color));
+        pronunciarTexto(obtenerColorMedio(imagenBitmap));
     }
 
     // Método para calcular el color promedio de una imagen
-    private int obtenerColorMedio(Bitmap imagenBitmap) {
+    private String obtenerColorMedio(Bitmap imagenBitmap) {
 
         // Calcula las coordenadas del centro de la imagen
         int centroX = imagenBitmap.getWidth() / 2;
@@ -510,8 +507,8 @@ public class CameraActivity extends AppCompatActivity {
         int sumaAzul = 0;
 
         // Recorre los píxeles alrededor del centro de la imagen
-        for (int x = -1; x <= 1; x++) {
-            for (int y = -1; y <= 1; y++) {
+        for (int x = -2; x <= 2; x++) {
+            for (int y = -2; y <= 2; y++) {
                 // Obtén el color del píxel en la posición (x, y)
                 int colorPixel = imagenBitmap.getPixel(centroX + x, centroY + y);
 
@@ -529,26 +526,16 @@ public class CameraActivity extends AppCompatActivity {
 
         // Calcula el color promedio
 
-        int promedioRojo = sumaRojo / 9;
-        int promedioVerde = sumaVerde / 9;
-        int promedioAzul = sumaAzul / 9;
+        int promedioRojo = sumaRojo / 25;
+        int promedioVerde = sumaVerde / 25;
+        int promedioAzul = sumaAzul / 25;
 
         // Combina los componentes de color para obtener el color promedio
-        int colorPromedio = Color.rgb(promedioRojo, promedioVerde, promedioAzul);
 
-        return colorPromedio;
+
+        return queColorEs(promedioRojo, promedioVerde, promedioAzul);
     }
 
-
-    // Método para dividir el color en RGB
-    private String sacarColoresRGB(int colorPromedio) {
-
-        int rojo = Color.red(colorPromedio);
-        int verde = Color.green(colorPromedio);
-        int azul = Color.blue(colorPromedio);
-
-        return queColorEs(rojo, verde, azul);
-    }
 
     public static String queColorEs(int rojo, int verde, int azul) {
 
