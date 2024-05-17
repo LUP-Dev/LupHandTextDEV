@@ -308,6 +308,7 @@ public class CameraActivity extends AppCompatActivity {
         });
 
         modo.setOnClickListener(v -> {
+            //Modo Color
             if (modo.isChecked()) {
                 color.setVisibility(View.VISIBLE);
                 captura.setVisibility(View.INVISIBLE);
@@ -322,11 +323,13 @@ public class CameraActivity extends AppCompatActivity {
                 startImageUpdateTimer();
 
             } else {
+                //Modo Captura
                 captura.setVisibility(View.VISIBLE);
                 color.setVisibility(View.INVISIBLE);
                 camera.getCameraControl().setLinearZoom(0f);
                 flash.setVisibility(View.INVISIBLE);
                 textoLinterna.setVisibility(View.INVISIBLE);
+                camera.getCameraControl().enableTorch(false);
                 imageCapture.setFlashMode(ImageCapture.FLASH_MODE_AUTO);
                 imageView.setVisibility(View.VISIBLE);
                 burbuja.setVisibility(View.INVISIBLE);
@@ -540,7 +543,7 @@ public class CameraActivity extends AppCompatActivity {
                 // Lógica para capturar una imagen y actualizar la ImageView
                 captureAndDisplayImage();
             }
-        }, 0, 50); // Intervalo de actualización en milisegundos (en este caso, cada segundo)
+        }, 0, 15); // Intervalo de actualización en milisegundos
     }
 
     // Método para detener el temporizador
@@ -567,10 +570,6 @@ public class CameraActivity extends AppCompatActivity {
         int verde = Color.green(centralPixelColor);
         int azul = Color.blue(centralPixelColor);
 
-
-        // Combina los componentes de color para obtener el color promedio
-
-
         return queColorEs(rojo, verde, azul);
     }
 
@@ -579,48 +578,17 @@ public class CameraActivity extends AppCompatActivity {
 
         Map<String, int[]> colores = new HashMap<>();
 
-        //ORIGINALES
-//        colores.put("Negro", new int[]{30, 30, 30});
-//        colores.put("Blanco", new int[]{230, 220, 210});
-//        colores.put("Gris", new int[]{70, 70, 70});
-//        colores.put("Rojo", new int[]{200, 40, 40});
-//        colores.put("Verde", new int[]{94, 200, 40});
-//        colores.put("Azul", new int[]{40, 40, 200});
-//        colores.put("Amarillo", new int[]{190, 190, 40});
-//        colores.put("Naranja", new int[]{255, 125, 0});
-//        colores.put("Violeta", new int[]{150, 40, 200});
-//        colores.put("Marrón", new int[]{130, 70, 20});
-        // Define los colores básicos y sus valores RGB
-        colores.put("Negro", new int[]{0, 0, 0});
-        colores.put("Blanco", new int[]{255, 255, 255});
-        colores.put("Gris", new int[]{128, 128, 128});
-        colores.put("Rojo oscuro", new int[]{139, 0, 0});
-        colores.put("Rojo", new int[]{255, 0, 0});
-        colores.put("Rojo claro", new int[]{255, 69, 0});
-        colores.put("Verde oscuro", new int[]{0, 100, 0});
-        colores.put("Verde", new int[]{0, 128, 0});
-        colores.put("Verde claro", new int[]{144, 238, 144});
-        colores.put("Azul oscuro", new int[]{0, 0, 139});
-        colores.put("Azul", new int[]{0, 0, 255});
-        colores.put("Azul claro", new int[]{173, 216, 230});
-        colores.put("Amarillo oscuro", new int[]{184, 134, 11});
-        colores.put("Amarillo", new int[]{255, 255, 0});
-        colores.put("Amarillo claro", new int[]{255, 255, 224});
-        colores.put("Naranja oscuro", new int[]{255, 140, 0});
-        colores.put("Naranja", new int[]{255, 165, 0});
-        colores.put("Naranja claro", new int[]{255, 218, 185});
-        colores.put("Violeta oscuro", new int[]{148, 0, 211});
-        colores.put("Violeta", new int[]{238, 130, 238});
-        colores.put("Violeta claro", new int[]{230, 230, 250});
-        colores.put("Marrón oscuro", new int[]{139, 69, 19});
-        colores.put("Marrón", new int[]{165, 42, 42});
-        colores.put("Marrón claro", new int[]{205, 133, 63});
-        colores.put("Rosado oscuro", new int[]{255, 20, 147});
-        colores.put("Rosado", new int[]{255, 192, 203});
-        colores.put("Rosado claro", new int[]{255, 182, 193});
-        colores.put("Gris claro", new int[]{211, 211, 211});
-        colores.put("Gris perla", new int[]{224, 224, 224});
-        colores.put("Gris oscuro", new int[]{105, 105, 105});
+        //Colores
+        colores.put("Negro", new int[]{30, 30, 30});
+        colores.put("Blanco", new int[]{230, 220, 210});
+        colores.put("Gris", new int[]{70, 70, 70});
+        colores.put("Rojo", new int[]{190, 45, 45});
+        colores.put("Verde", new int[]{100, 190, 40});
+        colores.put("Azul", new int[]{40, 40, 200});
+        colores.put("Amarillo", new int[]{190, 185, 40});
+        colores.put("Naranja", new int[]{255, 125, 0});
+        colores.put("Violeta", new int[]{150, 40, 200});
+        colores.put("Marrón", new int[]{130, 70, 20});
 
 
         double distanciaMinimaCuadrada = Double.MAX_VALUE;
