@@ -17,6 +17,8 @@ import java.util.Objects;
 
 public class Inicio extends AppCompatActivity {
 
+    private static final String TAG = CameraActivity.class.getSimpleName();
+
     private final String[] REQUIRED_PERMISSIONS = new String[]{
             "android.permission.CAMERA",
             "android.permission.BLUETOOTH",
@@ -34,6 +36,7 @@ public class Inicio extends AppCompatActivity {
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate: Activity created");
         setContentView(R.layout.activity_inicio);
         Log.d("InicioActivity", "Solicitando permisos...");
         requestPermissions();

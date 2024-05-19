@@ -136,6 +136,8 @@ public class CameraActivity extends AppCompatActivity{
         super.onCreate(savedInstanceState);
         Objects.requireNonNull(getSupportActionBar()).hide();
 
+        System.loadLibrary("opencv_java4");
+
         // Asegúrate de que estás cargando el layout correcto aquí
         setContentView(R.layout.activity_camera); // Asegúrate de que este es el layout correcto que contiene mPreviewView
 
@@ -606,7 +608,7 @@ public class CameraActivity extends AppCompatActivity{
     private boolean loadCascadeFile() {
         try {
             // Cargar el archivo de cascada desde los recursos.
-            InputStream is = getResources().openRawResource(R.raw.haarcascade_hand); // Asegúrate de que el archivo se llame así en `res/raw`
+            InputStream is = getResources().openRawResource(R.raw.hand_cascade); // Asegúrate de que el archivo se llame así en `res/raw`
             File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
             File cascadeFile = new File(cascadeDir, "hand_cascade.xml");
             FileOutputStream os = new FileOutputStream(cascadeFile);
