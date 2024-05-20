@@ -8,15 +8,11 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Size;
-import android.view.Surface;
-import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
@@ -29,11 +25,11 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.google.common.util.concurrent.ListenableFuture;
-
-import org.opencv.android.Utils;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
-import org.opencv.imgproc.Imgproc;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.text.Text;
+import com.google.mlkit.vision.text.TextRecognition;
+import com.google.mlkit.vision.text.TextRecognizer;
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutionException;
@@ -46,11 +42,10 @@ public class CameraActivity extends AppCompatActivity {
     private static final int REQUEST_CAMERA_PERMISSION = 1001;
 
     private PreviewView previewView;
-    private ImageView imageView;
-    private Button captureButton;
-
-    private Executor executor = Executors.newSingleThreadExecutor();
+    private TextView textView;
     private ImageCapture imageCapture;
+    private TextRecognizer textRecognizer;
+    private final Executor executor = Executors.newSingleThreadExecutor();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,19 +53,16 @@ public class CameraActivity extends AppCompatActivity {
         setContentView(R.layout.activity_camera);
 
         previewView = findViewById(R.id.previewView);
-        imageView = findViewById(R.id.imageView);
-        captureButton = findViewById(R.id.button_capture);
+        textView = findViewById(R.id.textView);
+
+        // Initialize TextRecognizer
+        textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             startCamera();
         } else {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
         }
-
-        captureButton.setOnClickListener(v -> takePicture());
-
-        // Load OpenCV library
-        System.loadLibrary("opencv_java4");
     }
 
     private void startCamera() {
@@ -108,35 +100,16 @@ public class CameraActivity extends AppCompatActivity {
     private void analyzeImage(@NonNull ImageProxy image) {
         Bitmap bitmap = imageProxyToBitmap(image);
         if (bitmap != null) {
-            Mat mat = new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8UC1);
-            Utils.bitmapToMat(bitmap, mat);
-            Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGBA2GRAY);
-
-            Bitmap processedBitmap = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
-            Utils.matToBitmap(mat, processedBitmap);
-
-            runOnUiThread(() -> imageView.setImageBitmap(processedBitmap));
-
-            mat.release();
+            InputImage inputImage = InputImage.fromBitmap(bitmap, image.getImageInfo().getRotationDegrees());
+            textRecognizer.process(inputImage)
+                    .addOnSuccessListener(visionText -> {
+                        String recognizedText = visionText.getText();
+                        Log.d(TAG, "Recognized text: " + recognizedText);
+                        runOnUiThread(() -> textView.setText(recognizedText));
+                    })
+                    .addOnFailureListener(e -> Log.e(TAG, "Text recognition failed", e));
         }
         image.close();
-    }
-
-    private void takePicture() {
-        if (imageCapture == null) return;
-
-        imageCapture.takePicture(executor, new ImageCapture.OnImageCapturedCallback() {
-            @Override
-            public void onCaptureSuccess(@NonNull ImageProxy image) {
-                analyzeImage(image);
-                image.close();
-            }
-
-            @Override
-            public void onError(@NonNull ImageCaptureException exception) {
-                Log.e(TAG, "Photo capture failed: " + exception.getMessage(), exception);
-            }
-        });
     }
 
     private Bitmap imageProxyToBitmap(ImageProxy image) {
