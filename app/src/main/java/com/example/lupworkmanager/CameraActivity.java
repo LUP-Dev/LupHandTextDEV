@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.util.Size;
 import android.widget.TextView;
@@ -30,12 +31,12 @@ import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.TextRecognizer;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 
-import java.nio.ByteBuffer;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-public class CameraActivity extends AppCompatActivity {
+public class CameraActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
 
     private static final String TAG = "CameraActivity";
     private static final int REQUEST_CAMERA_PERMISSION = 1001;
@@ -44,6 +45,7 @@ public class CameraActivity extends AppCompatActivity {
     private TextView textView;
     private ImageCapture imageCapture;
     private TextRecognizer textRecognizer;
+    private TextToSpeech textToSpeech;
     private final Executor executor = Executors.newSingleThreadExecutor();
 
     @Override
@@ -57,10 +59,27 @@ public class CameraActivity extends AppCompatActivity {
         // Initialize TextRecognizer
         textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
 
+        // Initialize TextToSpeech
+        textToSpeech = new TextToSpeech(this, this);
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             startCamera();
         } else {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
+        }
+    }
+
+    @Override
+    public void onInit(int status) {
+        if (status == TextToSpeech.SUCCESS) {
+            int result = textToSpeech.setLanguage(Locale.getDefault());
+            if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Log.e(TAG, "Language not supported");
+            } else {
+                Log.d(TAG, "TextToSpeech initialized successfully");
+            }
+        } else {
+            Log.e(TAG, "Initialization of TextToSpeech failed");
         }
     }
 
@@ -120,7 +139,25 @@ public class CameraActivity extends AppCompatActivity {
             recognizedText.append(block.getText()).append("\n");
         }
         Log.d(TAG, "Recognized text: " + recognizedText.toString());
-        runOnUiThread(() -> textView.setText(recognizedText.toString()));
+        runOnUiThread(() -> {
+            textView.setText(recognizedText.toString());
+            speak(recognizedText.toString());
+        });
+    }
+
+    private void speak(String text) {
+        if (textToSpeech != null && !text.isEmpty()) {
+            textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (textToSpeech != null) {
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+        }
+        super.onDestroy();
     }
 
     @Override
