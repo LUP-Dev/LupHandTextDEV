@@ -16,7 +16,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
-import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
@@ -98,26 +97,30 @@ public class CameraActivity extends AppCompatActivity {
 
     @SuppressLint("UnsafeOptInUsageError")
     private void analyzeImage(@NonNull ImageProxy image) {
-        Bitmap bitmap = imageProxyToBitmap(image);
-        if (bitmap != null) {
-            InputImage inputImage = InputImage.fromBitmap(bitmap, image.getImageInfo().getRotationDegrees());
-            textRecognizer.process(inputImage)
-                    .addOnSuccessListener(visionText -> {
-                        String recognizedText = visionText.getText();
-                        Log.d(TAG, "Recognized text: " + recognizedText);
-                        runOnUiThread(() -> textView.setText(recognizedText));
-                    })
-                    .addOnFailureListener(e -> Log.e(TAG, "Text recognition failed", e));
-        }
-        image.close();
+        Log.d(TAG, "Image analysis started");
+        @SuppressLint("UnsafeOptInUsageError")
+        InputImage inputImage = InputImage.fromMediaImage(image.getImage(), image.getImageInfo().getRotationDegrees());
+
+        textRecognizer.process(inputImage)
+                .addOnSuccessListener(visionText -> {
+                    Log.d(TAG, "Text recognition succeeded");
+                    processRecognizedText(visionText);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Text recognition failed", e);
+                })
+                .addOnCompleteListener(task -> {
+                    image.close();
+                });
     }
 
-    private Bitmap imageProxyToBitmap(ImageProxy image) {
-        ImageProxy.PlaneProxy plane = image.getPlanes()[0];
-        ByteBuffer buffer = plane.getBuffer();
-        byte[] bytes = new byte[buffer.remaining()];
-        buffer.get(bytes);
-        return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+    private void processRecognizedText(Text visionText) {
+        StringBuilder recognizedText = new StringBuilder();
+        for (Text.TextBlock block : visionText.getTextBlocks()) {
+            recognizedText.append(block.getText()).append("\n");
+        }
+        Log.d(TAG, "Recognized text: " + recognizedText.toString());
+        runOnUiThread(() -> textView.setText(recognizedText.toString()));
     }
 
     @Override
