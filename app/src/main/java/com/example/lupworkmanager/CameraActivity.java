@@ -1,5 +1,7 @@
 package com.example.lupworkmanager;
 
+import static com.example.lupworkmanager.ClasificadorDeColor.clasificador;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -53,10 +55,8 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 
 import java.nio.ByteBuffer;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -105,9 +105,10 @@ public class CameraActivity extends AppCompatActivity {
     private int centralPixelColor;
 
     private Timer timer;
-    TextView textoLinterna;
+    private TextView textoLinterna;
 
-    View burbuja;
+    private View burbuja;
+    private View cuadrado;
     private ImageCapture imageCapture;
     private TimerTask timerTask;
 
@@ -243,6 +244,8 @@ public class CameraActivity extends AppCompatActivity {
         textoLinterna.setVisibility(View.INVISIBLE);
         burbuja = findViewById(R.id.color_bubble);
         burbuja.setVisibility(View.INVISIBLE);
+        cuadrado = findViewById(R.id.cuadradoFoco);
+        cuadrado.setVisibility(View.INVISIBLE);
 
         stop = findViewById(R.id.stop);
         imageView = findViewById(R.id.imageView);
@@ -316,9 +319,11 @@ public class CameraActivity extends AppCompatActivity {
                 color.setVisibility(View.VISIBLE);
                 captura.setVisibility(View.INVISIBLE);
                 camera.getCameraControl().setLinearZoom(0.75f);
+                flash.setChecked(false);
                 flash.setVisibility(View.VISIBLE);
                 textoLinterna.setVisibility(View.VISIBLE);
                 burbuja.setVisibility(View.VISIBLE);
+                cuadrado.setVisibility(View.VISIBLE);
                 GradientDrawable drawable = (GradientDrawable) burbuja.getBackground();
                 drawable.setColor(Color.WHITE);
                 imageCapture.setFlashMode(ImageCapture.FLASH_MODE_OFF);
@@ -336,6 +341,7 @@ public class CameraActivity extends AppCompatActivity {
                 imageCapture.setFlashMode(ImageCapture.FLASH_MODE_AUTO);
                 imageView.setVisibility(View.VISIBLE);
                 burbuja.setVisibility(View.INVISIBLE);
+                cuadrado.setVisibility(View.INVISIBLE);
                 stopImageUpdateTimer();
             }
         });
@@ -491,11 +497,11 @@ public class CameraActivity extends AppCompatActivity {
         color.setOnClickListener(v -> {
             // Lógica para capturar una imagen cuando se presiona el botón "color"
             // Inicia la captura de imagen automáticamente al presionar el botón "color"
-
+            stopImageUpdateTimer();
             initialTime = System.currentTimeMillis(); // INICIO TIEMPO DE EJECUCION
             calcularYDecirColor();
             progressBar.setVisibility(View.INVISIBLE);
-
+            startImageUpdateTimer();
 
         });
     }
@@ -521,7 +527,7 @@ public class CameraActivity extends AppCompatActivity {
     private void startImageUpdateTimer() {
         timer = new Timer();
         initializeTimerTask();
-        timer.schedule(timerTask, 0, 50);
+        timer.schedule(timerTask, 0, 100);
     }
 
     public void initializeTimerTask() {
@@ -560,45 +566,7 @@ public class CameraActivity extends AppCompatActivity {
         int verde = Color.green(centralPixelColor);
         int azul = Color.blue(centralPixelColor);
 
-        return queColorEs(rojo, verde, azul);
-    }
-
-
-    public static String queColorEs(int rojo, int verde, int azul) {
-
-        Map<String, int[]> colores = new HashMap<>();
-
-        //Colores
-        colores.put("Negro", new int[]{20, 20, 20});
-        colores.put("Blanco", new int[]{230, 220, 210});
-        colores.put("Gris", new int[]{45, 45, 45});
-        colores.put("Rojo", new int[]{190, 45, 45});
-        colores.put("Verde", new int[]{100, 190, 40});
-        colores.put("Azul", new int[]{40, 40, 200});
-        colores.put("Amarillo", new int[]{190, 185, 40});
-        colores.put("Naranja", new int[]{255, 125, 0});
-        colores.put("Violeta", new int[]{150, 40, 200});
-        colores.put("Marrón", new int[]{128, 64, 0});
-
-        double distanciaMinimaCuadrada = Double.MAX_VALUE;
-        String nombreColorMasCercano = "Desconocido";
-
-// Itera sobre los colores para encontrar el más cercano
-        for (Map.Entry<String, int[]> entry : colores.entrySet()) {
-            String nombreColor = entry.getKey();
-            int[] color = entry.getValue();
-
-            // Calcula la distancia euclidiana al cuadrado entre el color dado y el color actual
-            double distanciaCuadrada = Math.pow(rojo - color[0], 2) + Math.pow(verde - color[1], 2) + Math.pow(azul - color[2], 2);
-
-            // Comprueba si esta distancia es menor que la mínima encontrada hasta ahora
-            if (distanciaCuadrada < distanciaMinimaCuadrada) {
-                distanciaMinimaCuadrada = distanciaCuadrada;
-                nombreColorMasCercano = nombreColor;
-            }
-        }
-
-        return nombreColorMasCercano;
+        return clasificador(rojo, verde, azul);
     }
 
 
