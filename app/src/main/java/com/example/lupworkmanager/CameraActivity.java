@@ -103,11 +103,13 @@ public class CameraActivity extends AppCompatActivity {
     private int contador = 0;
 
     private int centralPixelColor;
+
     private Timer timer;
     TextView textoLinterna;
 
     View burbuja;
     private ImageCapture imageCapture;
+    private TimerTask timerTask;
 
     //OCULTAR BOTONES OCULTOS
     private static void showWorkFinished() {
@@ -250,7 +252,6 @@ public class CameraActivity extends AppCompatActivity {
         next = findViewById(R.id.next);
         pause = findViewById(R.id.pause);
 
-        //
 
         //DEFINIENDO RECTANGULO DE CAPTURA IGUAL A LA PREVIEW
         ViewPort viewPort = ((PreviewView) findViewById(R.id.camera)).getViewPort();
@@ -265,6 +266,7 @@ public class CameraActivity extends AppCompatActivity {
         //Tratando excepcion de cambio de camara ,si no se encuentra trasera a frontal
         try {
             camera = cameraProvider.bindToLifecycle(this, cameraSelector, useCaseGroup);
+
         } catch (Exception e) {
             // No se ha encontrado camara trasera y pasa a frontal
             cameraSelector = new CameraSelector.Builder()
@@ -286,6 +288,7 @@ public class CameraActivity extends AppCompatActivity {
 
         //CONTROL CAMARA
         CameraControl controlCamara = camera.getCameraControl();
+
         //LIVE INFO CAMARA
         CameraInfo infoCamara = camera.getCameraInfo();
         //System.out.println("INFO CAMARA AQUI:");
@@ -338,7 +341,7 @@ public class CameraActivity extends AppCompatActivity {
         });
 
         flash.setOnClickListener(v -> {
-            if (modo.isChecked()) {
+            if (flash.isChecked()) {
                 imageCapture.setFlashMode(ImageCapture.FLASH_MODE_ON);
                 camera.getCameraControl().enableTorch(true);
             } else {
@@ -497,53 +500,40 @@ public class CameraActivity extends AppCompatActivity {
         });
     }
 
-    // Método para capturar la imagen y actualizar la ImageView
-    private void captureAndDisplayImage() {
-
-        imageCapture.takePicture(executor, new ImageCapture.OnImageCapturedCallback() {
-            @Override
-            public void onCaptureSuccess(@NonNull ImageProxy image) {
-                // Procesa la imagen capturada
-                Bitmap imagenBitmap = imageProxyToBitmap(image);
-                // Cierra la imagen para liberar recursos
-                image.close();
-
-                // Escalar la imagen para que coincida con las dimensiones de la ImageView
-                int targetWidth = burbuja.getWidth();
-                int targetHeight = burbuja.getHeight();
-                Bitmap scaledBitmap = Bitmap.createScaledBitmap(imagenBitmap, targetWidth, targetHeight, true);
-
-                // Extraer el color del píxel central de la imagen escalada
-                centralPixelColor = scaledBitmap.getPixel(targetWidth / 2, targetHeight / 2);
-
-                runOnUiThread(() -> {
-                    // Establece el color de fondo de la ImageView con el color del píxel central
-
-                    GradientDrawable drawable = (GradientDrawable) burbuja.getBackground();
-                    drawable.setColor(centralPixelColor);
-                });
-            }
-
-            @Override
-            public void onError(@NonNull ImageCaptureException error) {
-                // Maneja el error en caso de que la captura de imagen falle
-                error.printStackTrace();
-                // Puedes mostrar un mensaje de error o realizar otras acciones según sea necesario
-                Toast.makeText(CameraActivity.this, "Error al capturar la imagen", Toast.LENGTH_SHORT).show();
-            }
+    // Método para obtener el color del píxel central de la vista previa de la cámara
+    private void getColorFromCameraPreview() {
+        // Obtener la vista previa de la cámara como un bitmap
+        Bitmap previewBitmap = mPreviewView.getBitmap();
+        // Escalar el bitmap para que coincida con las dimensiones de la burbuja
+        int targetWidth = burbuja.getWidth();
+        int targetHeight = burbuja.getHeight();
+        Bitmap scaledBitmap = Bitmap.createScaledBitmap(previewBitmap, targetWidth, targetHeight, true);
+        // Obtener el color del píxel central del bitmap escalado
+        centralPixelColor = scaledBitmap.getPixel(targetWidth / 2, targetHeight / 2);
+        // Establecer el color de fondo de la burbuja con el color del píxel central
+        runOnUiThread(() -> {
+            GradientDrawable drawable = (GradientDrawable) burbuja.getBackground();
+            drawable.setColor(centralPixelColor);
         });
     }
 
     // Método para iniciar el temporizador y actualizar la imagen cada cierto intervalo de tiempo
     private void startImageUpdateTimer() {
         timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
+        initializeTimerTask();
+        timer.schedule(timerTask, 0, 50);
+    }
+
+    public void initializeTimerTask() {
+        timerTask = new TimerTask() {
             public void run() {
-                // Lógica para capturar una imagen y actualizar la ImageView
-                captureAndDisplayImage();
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        getColorFromCameraPreview(); // Método para actualizar el color de la burbuja
+                    }
+                });
             }
-        }, 0, 15); // Intervalo de actualización en milisegundos
+        };
     }
 
     // Método para detener el temporizador
@@ -579,17 +569,16 @@ public class CameraActivity extends AppCompatActivity {
         Map<String, int[]> colores = new HashMap<>();
 
         //Colores
-        colores.put("Negro", new int[]{30, 30, 30});
+        colores.put("Negro", new int[]{20, 20, 20});
         colores.put("Blanco", new int[]{230, 220, 210});
-        colores.put("Gris", new int[]{70, 70, 70});
+        colores.put("Gris", new int[]{45, 45, 45});
         colores.put("Rojo", new int[]{190, 45, 45});
         colores.put("Verde", new int[]{100, 190, 40});
         colores.put("Azul", new int[]{40, 40, 200});
         colores.put("Amarillo", new int[]{190, 185, 40});
         colores.put("Naranja", new int[]{255, 125, 0});
         colores.put("Violeta", new int[]{150, 40, 200});
-        colores.put("Marrón", new int[]{130, 70, 20});
-
+        colores.put("Marrón", new int[]{128, 64, 0});
 
         double distanciaMinimaCuadrada = Double.MAX_VALUE;
         String nombreColorMasCercano = "Desconocido";
@@ -610,7 +599,6 @@ public class CameraActivity extends AppCompatActivity {
         }
 
         return nombreColorMasCercano;
-
     }
 
 
