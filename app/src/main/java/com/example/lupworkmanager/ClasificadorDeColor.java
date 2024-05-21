@@ -7,7 +7,15 @@ public class ClasificadorDeColor {
         String tono = "";
         String colorPrincipal = getColorPrincipal(hsl);
         if (!colorPrincipal.equals("Negro") && !colorPrincipal.equals("Blanco")) {
-            if (isLight(hsl)) {
+            if (isMuchMoreLight(hsl)) {
+                tono = " Muy Claro Casi Blanco";
+            } else if (isMuchMoreDark(hsl)) {
+                tono = " Muy Oscuro Casi Negro";
+            } else if (isMoreLight(hsl)) {
+                tono = " Muy Claro";
+            } else if (isMoreDark(hsl)) {
+                tono = " Muy Oscuro";
+            } else if (isLight(hsl)) {
                 tono = " Claro";
             } else if (isDark(hsl)) {
                 tono = " Oscuro";
@@ -56,7 +64,7 @@ public class ClasificadorDeColor {
         float lightness = hsl[2];
 
         if (saturation < 0.15 && lightness < 0.15) return "Negro";
-        if (saturation < 0.10 && lightness > 0.85) return "Blanco";
+        if (saturation < 0.10 && lightness > 0.87) return "Blanco";
         if (saturation < 0.15) return "Gris";
 
         // Rango para Marrón
@@ -89,9 +97,29 @@ public class ClasificadorDeColor {
         return lightness > 0.6;
     }
 
+    private static boolean isMoreLight(float[] hsl) {
+        float lightness = hsl[2];
+        return lightness > 0.75;
+    }
+
+    private static boolean isMuchMoreLight(float[] hsl) {
+        float lightness = hsl[2];
+        return lightness > 0.85;
+    }
+
     private static boolean isDark(float[] hsl) {
         float lightness = hsl[2];
         return lightness < 0.25;
+    }
+
+    private static boolean isMoreDark(float[] hsl) {
+        float lightness = hsl[2];
+        return lightness < 0.20;
+    }
+
+    private static boolean isMuchMoreDark(float[] hsl) {
+        float lightness = hsl[2];
+        return lightness < 0.17;
     }
 }
 
