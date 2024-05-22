@@ -527,7 +527,7 @@ public class CameraActivity extends AppCompatActivity {
     private void startImageUpdateTimer() {
         timer = new Timer();
         initializeTimerTask();
-        timer.schedule(timerTask, 0, 100);
+        timer.schedule(timerTask, 0, 50);
     }
 
     public void initializeTimerTask() {

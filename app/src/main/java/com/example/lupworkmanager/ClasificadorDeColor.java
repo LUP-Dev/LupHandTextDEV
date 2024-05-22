@@ -63,31 +63,35 @@ public class ClasificadorDeColor {
         float saturation = hsl[1];
         float lightness = hsl[2];
 
-        if (saturation < 0.15 && lightness < 0.15) return "Negro";
-        if (saturation < 0.10 && lightness > 0.87) return "Blanco";
-        if (saturation < 0.15) return "Gris";
+        if (lightness < 0.15) return "Negro";
+        if (saturation < 0.16 && lightness > 0.75) return "Blanco";
+        if (saturation < 0.13) return "Gris";
 
         // Rango para Marrón
-        if (hue >= 20 && hue < 40 && saturation > 0.2 && saturation < 0.7 && lightness < 0.5)
+        if (hue >= 20 && hue < 40 && saturation > 0.2 && saturation < 0.7 && lightness < 0.6)
             return "Marrón";
 
         if (hue < 15) return "Rojo";
         if (hue >= 15 && hue < 25) return "Rojo Anaranjado";
         if (hue >= 25 && hue < 35) return "Naranja";
         if (hue >= 35 && hue < 40) return "Amarillo ocre";
-        if (hue >= 40 && hue < 65) return "Amarillo";
-        if (hue >= 65 && hue < 75) return "Verde Pistacho";
+        if (hue >= 40 && hue < 55) return "Amarillo";
+        if (hue >= 55 && hue < 75) return "Verde Pistacho";
         if (hue >= 75 && hue < 90) return "Verde Lima";
         if (hue >= 90 && hue < 135) return "Verde";
         if (hue >= 135 && hue < 165) return "Turquesa";
-        if (hue >= 165 && hue < 195) return "Cián";
-        if (hue >= 195 && hue < 225) return "Azul Océano";
-        if (hue >= 225 && hue < 255) return "Azul";
-        if (hue >= 255 && hue < 285) return "Violeta";
-        if (hue >= 285 && hue < 315) return "Rosa";
-        if (hue >= 315 && hue < 335) return "Fúcsia";
-        if (hue >= 335 && hue < 345) return "Frambuesa";
-        if (hue >= 345) return "Rojo";
+        if (hue >= 165 && hue < 195) return "Cyan";
+        if (hue >= 195 && hue < 215) return "Azul Celeste";
+        if (hue >= 215 && hue < 230) return "Azul";
+        if (hue >= 230 && hue < 255) return "Azul Marino";
+        if (hue >= 255 && hue < 267) return "Índigo";
+        if (hue >= 267 && hue < 280) return "Violeta";
+        if (hue >= 280 && hue < 290) return "Púrpura";
+        if (hue >= 290 && hue < 315) return "Magenta";
+        if (hue >= 315 && hue < 335) return "Fucsia";
+        if (hue >= 335 && hue < 340) return "Fucsia intenso";
+        if (hue >= 340 && hue < 350) return "Rojo Fucsia";
+        if (hue >= 350) return "Rojo";
 
         return "Color no reconocido";
     }
@@ -99,27 +103,27 @@ public class ClasificadorDeColor {
 
     private static boolean isMoreLight(float[] hsl) {
         float lightness = hsl[2];
-        return lightness > 0.75;
+        return lightness > 0.70;
     }
 
     private static boolean isMuchMoreLight(float[] hsl) {
         float lightness = hsl[2];
-        return lightness > 0.85;
+        return lightness > 0.75;
     }
 
     private static boolean isDark(float[] hsl) {
         float lightness = hsl[2];
-        return lightness < 0.25;
+        return lightness < 0.35;
     }
 
     private static boolean isMoreDark(float[] hsl) {
         float lightness = hsl[2];
-        return lightness < 0.20;
+        return lightness < 0.25;
     }
 
     private static boolean isMuchMoreDark(float[] hsl) {
         float lightness = hsl[2];
-        return lightness < 0.17;
+        return lightness < 0.21;
     }
 }
 
