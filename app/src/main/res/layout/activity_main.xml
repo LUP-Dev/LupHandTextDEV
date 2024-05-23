@@ -204,10 +204,13 @@
         app:layout_constraintEnd_toEndOf="parent">
 
         <ImageView
+            android:id="@+id/flashBoton"
+            android:clickable="true"
+            android:focusable="true"
             android:layout_width="25dp"
             android:layout_height="25dp"
-            android:padding="4dp"
             android:contentDescription="@string/image"
+            android:padding="4dp"
             android:src="@drawable/ic_baseline_flash_on_24"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"

@@ -1,6 +1,7 @@
 package com.example.lupworkmanager;
 
 import static com.example.lupworkmanager.ClasificadorDeColor.clasificador;
+import static com.example.lupworkmanager.R.id.flashBoton;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -33,6 +34,7 @@ import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
+import androidx.camera.core.TorchState;
 import androidx.camera.core.UseCaseGroup;
 import androidx.camera.core.ViewPort;
 import androidx.camera.lifecycle.ProcessCameraProvider;
@@ -86,7 +88,7 @@ public class CameraActivity extends AppCompatActivity {
     //GUARDADO SERVIDOR
     String fotoen64;
 
-    Switch modo, flash;
+    Switch modo;
     MediaPlayer mp; //Sonido captura
     LanguageIdentifier languageIdentifier;
     //BDD
@@ -104,6 +106,8 @@ public class CameraActivity extends AppCompatActivity {
     private ImageCapture imageCapture;
     private TimerTask timerTask;
     private ImageAnalysis imageAnalysis;
+
+    private ImageView flash;
 
     //OCULTAR BOTONES OCULTOS
     private static void showWorkFinished() {
@@ -222,7 +226,7 @@ public class CameraActivity extends AppCompatActivity {
 
         burbuja = findViewById(R.id.color_bubble);
         cuadrado = findViewById(R.id.cuadradoFoco);
-
+        flash = findViewById(flashBoton);
         mPreviewView = findViewById(R.id.camera);
 
 
@@ -273,18 +277,27 @@ public class CameraActivity extends AppCompatActivity {
                 "Listo para capturar", Toast.LENGTH_LONG).show();
 
 
-        //CAPTURA COLOR
-        color.setOnClickListener(v -> {
-            // Lógica para capturar una imagen cuando se presiona el botón "color"
-            // Inicia la captura de imagen automáticamente al presionar el botón "color"
+        //Boton de flash
+        flash.setOnClickListener(v -> {
 
-            stopImageUpdateTimer();
-            calcularYDecirColor();
-            startImageUpdateTimer();
+            if (camera.getCameraInfo().getTorchState().getValue() == TorchState.OFF) {
 
+                camera.getCameraControl().enableTorch(true);
+            } else {
+
+                camera.getCameraControl().enableTorch(false);
+            }
         });
 
 
+        //CAPTURA COLOR
+        color.setOnClickListener(v -> {
+
+            calcularYDecirColor();
+
+        });
+
+        //Empieza a actualizar la burbuja cada cierto tiempo
         startImageUpdateTimer();
 
     }
@@ -304,7 +317,7 @@ public class CameraActivity extends AppCompatActivity {
     private void startImageUpdateTimer() {
         timer = new Timer();
         initializeTimerTask();
-        timer.schedule(timerTask, 0, 100);
+        timer.schedule(timerTask, 0, 50);
     }
 
     public void initializeTimerTask() {
@@ -398,6 +411,7 @@ public class CameraActivity extends AppCompatActivity {
             int verde = Color.green(rgb);
             int azul = Color.blue(rgb);
 
+            //Guarda en la variable global el pixel visible actual
             centralPixelColor = Color.rgb(rojo, verde, azul);
 
             runOnUiThread(() -> {

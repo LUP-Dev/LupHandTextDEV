@@ -7,9 +7,9 @@ public class ClasificadorDeColor {
         String tono = "";
         String colorPrincipal = getColorPrincipal(hsl);
         if (!colorPrincipal.equals("Negro") && !colorPrincipal.equals("Blanco")) {
-            if (isMuchMoreLight(hsl)) {
+            if (isTooLight(hsl)) {
                 tono = ", Muy Claro Casi Blanco";
-            } else if (isMuchMoreDark(hsl)) {
+            } else if (isTooDark(hsl)) {
                 tono = ", Muy Oscuro Casi Negro";
             } else if (isMoreLight(hsl)) {
                 tono = ", Muy Claro";
@@ -69,7 +69,7 @@ public class ClasificadorDeColor {
 
         if (saturation < 0.17 && lightness < 0.15) return "Negro";
         if (saturation < 0.17 && lightness > 0.75) return "Blanco";
-        if (saturation < 0.13) return "Gris";
+        if (saturation < 0.17) return "Gris";
 
         // Rango para Marrón
         if (hue >= 20 && hue < 40 && saturation > 0.2 && saturation < 0.7 && lightness < 0.6)
@@ -87,8 +87,8 @@ public class ClasificadorDeColor {
         if (hue >= 165 && hue < 195) return "Cián";
         if (hue >= 195 && hue < 215) return "Azul Celeste";
         if (hue >= 215 && hue < 230) return "Azul";
-        if (hue >= 230 && hue < 255) return "Azul Marino";
-        if (hue >= 255 && hue < 267) return "Índigo";
+        if (hue >= 230 && hue < 245) return "Azul Marino";
+        if (hue >= 245 && hue < 267) return "Azul violáceo";
         if (hue >= 267 && hue < 280) return "Violeta";
         if (hue >= 280 && hue < 290) return "Púrpura";
         if (hue >= 290 && hue < 315) return "Magenta";
@@ -102,20 +102,20 @@ public class ClasificadorDeColor {
 
     private static boolean isBitLight(float[] hsl) {
         float lightness = hsl[2];
-        return lightness > 0.68;
+        return lightness > 0.45;
     }
 
     private static boolean isLight(float[] hsl) {
         float lightness = hsl[2];
-        return lightness > 0.70;
+        return lightness > 0.55;
     }
 
     private static boolean isMoreLight(float[] hsl) {
         float lightness = hsl[2];
-        return lightness > 0.73;
+        return lightness > 0.65;
     }
 
-    private static boolean isMuchMoreLight(float[] hsl) {
+    private static boolean isTooLight(float[] hsl) {
         float lightness = hsl[2];
         return lightness > 75;
     }
@@ -135,9 +135,9 @@ public class ClasificadorDeColor {
         return lightness < 0.20;
     }
 
-    private static boolean isMuchMoreDark(float[] hsl) {
+    private static boolean isTooDark(float[] hsl) {
         float lightness = hsl[2];
-        return lightness < 0.17;
+        return lightness < 0.12;
     }
 }
 
