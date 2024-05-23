@@ -6,9 +6,8 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.ImageFormat;
 import android.graphics.drawable.GradientDrawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -25,7 +24,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.Camera;
 import androidx.camera.core.CameraControl;
@@ -33,7 +31,6 @@ import androidx.camera.core.CameraInfo;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
-import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.core.UseCaseGroup;
@@ -43,19 +40,14 @@ import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.mlkit.nl.languageid.IdentifiedLanguage;
-import com.google.mlkit.nl.languageid.LanguageIdentification;
-import com.google.mlkit.nl.languageid.LanguageIdentificationOptions;
 import com.google.mlkit.nl.languageid.LanguageIdentifier;
 import com.google.mlkit.vision.common.InputImage;
-import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.TextRecognizer;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 
 import java.nio.ByteBuffer;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Timer;
@@ -78,7 +70,7 @@ public class CameraActivity extends AppCompatActivity {
     private final TextRecognizer recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
     Camera camera;
     Button captura;
-    Button color;
+    ImageView color;
     Button barcode;
     Button atras;
     Button next;
@@ -111,6 +103,7 @@ public class CameraActivity extends AppCompatActivity {
     private View cuadrado;
     private ImageCapture imageCapture;
     private TimerTask timerTask;
+    private ImageAnalysis imageAnalysis;
 
     //OCULTAR BOTONES OCULTOS
     private static void showWorkFinished() {
@@ -139,15 +132,6 @@ public class CameraActivity extends AppCompatActivity {
         //SONIDO DE CAPTURA INICIALIZACION
         mp = MediaPlayer.create(this, R.raw.captura);
 
-        // ARRANCAMOS LANGUAJE DETECTION
-        LanguageIdentificationOptions identifierOptions =
-                new LanguageIdentificationOptions.Builder()
-                        .setConfidenceThreshold(0.8f)  //SOLO TENER EN CUENTA SI TIENE MAS DE X % DE PERTENECER
-                        .build();
-
-        languageIdentifier = LanguageIdentification
-                .getClient(identifierOptions);
-
 
         //ARRANCAMOS TTS DE GOOGLE
         textToSpeech = new TextToSpeech(this, status -> {
@@ -159,6 +143,7 @@ public class CameraActivity extends AppCompatActivity {
         }, "com.google.android.tts");
 
         startCamera();
+
     }
 
     private void startCamera() {  //EMPIEZA LA EJECUCION DESPUES DE ARRANCAR LOS SERVICIOS NECESARIOS
@@ -191,7 +176,7 @@ public class CameraActivity extends AppCompatActivity {
                 .build();
 
 
-        ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
+        imageAnalysis = new ImageAnalysis.Builder()
                 .setImageQueueDepth(1) //MAXIMO ANALIZAR UNA FOTO A LA VEZ
                 .setTargetResolution(new Size(1280, 720)) //ESPECIFICANDO RESOLUCION
                 .build();
@@ -231,29 +216,14 @@ public class CameraActivity extends AppCompatActivity {
 
 
         //CAMBIAMOS DE INTERFAZ + AÑADIMOS elementos interfaz
-        setContentView(R.layout.activity_camera);
-        captura = findViewById(R.id.capturar);
+        setContentView(R.layout.activity_main);
 
-        color = findViewById(R.id.color);
-        color.setVisibility(View.INVISIBLE);
-        modo = findViewById(R.id.switchModo);
+        color = findViewById(R.id.captureImg);
 
-        flash = findViewById(R.id.switchFlash);
-        textoLinterna = findViewById(R.id.text_flash);
-        flash.setVisibility(View.INVISIBLE);
-        textoLinterna.setVisibility(View.INVISIBLE);
         burbuja = findViewById(R.id.color_bubble);
-        burbuja.setVisibility(View.INVISIBLE);
         cuadrado = findViewById(R.id.cuadradoFoco);
-        cuadrado.setVisibility(View.INVISIBLE);
 
-        stop = findViewById(R.id.stop);
-        imageView = findViewById(R.id.imageView);
         mPreviewView = findViewById(R.id.camera);
-        progressBar = findViewById(R.id.progressBar2);
-        atras = findViewById(R.id.atras);
-        next = findViewById(R.id.next);
-        pause = findViewById(R.id.pause);
 
 
         //DEFINIENDO RECTANGULO DE CAPTURA IGUAL A LA PREVIEW
@@ -269,7 +239,7 @@ public class CameraActivity extends AppCompatActivity {
         //Tratando excepcion de cambio de camara ,si no se encuentra trasera a frontal
         try {
             camera = cameraProvider.bindToLifecycle(this, cameraSelector, useCaseGroup);
-
+            preview.setSurfaceProvider(mPreviewView.getSurfaceProvider());
         } catch (Exception e) {
             // No se ha encontrado camara trasera y pasa a frontal
             cameraSelector = new CameraSelector.Builder()
@@ -303,231 +273,38 @@ public class CameraActivity extends AppCompatActivity {
                 "Listo para capturar", Toast.LENGTH_LONG).show();
 
 
-        preview.setSurfaceProvider(mPreviewView.getSurfaceProvider());
-
-        //BOTON PARAR / PAUSE DE HABLAR
-        stop.setOnClickListener(view -> {
-            if (textToSpeech.isSpeaking()) { //PARAR TTS
-                textToSpeech.stop();
-            }
-            showWorkFinished(); // QUITAR BOTONES OCULTOS
-        });
-
-        modo.setOnClickListener(v -> {
-            //Modo Color
-            if (modo.isChecked()) {
-                color.setVisibility(View.VISIBLE);
-                captura.setVisibility(View.INVISIBLE);
-                camera.getCameraControl().setLinearZoom(0.75f);
-                flash.setChecked(false);
-                flash.setVisibility(View.VISIBLE);
-                textoLinterna.setVisibility(View.VISIBLE);
-                burbuja.setVisibility(View.VISIBLE);
-                cuadrado.setVisibility(View.VISIBLE);
-                GradientDrawable drawable = (GradientDrawable) burbuja.getBackground();
-                drawable.setColor(Color.WHITE);
-                imageCapture.setFlashMode(ImageCapture.FLASH_MODE_OFF);
-                imageView.setVisibility(View.INVISIBLE);
-                startImageUpdateTimer();
-
-            } else {
-                //Modo Captura
-                captura.setVisibility(View.VISIBLE);
-                color.setVisibility(View.INVISIBLE);
-                camera.getCameraControl().setLinearZoom(0f);
-                flash.setVisibility(View.INVISIBLE);
-                textoLinterna.setVisibility(View.INVISIBLE);
-                camera.getCameraControl().enableTorch(false);
-                imageCapture.setFlashMode(ImageCapture.FLASH_MODE_AUTO);
-                imageView.setVisibility(View.VISIBLE);
-                burbuja.setVisibility(View.INVISIBLE);
-                cuadrado.setVisibility(View.INVISIBLE);
-                stopImageUpdateTimer();
-            }
-        });
-
-        flash.setOnClickListener(v -> {
-            if (flash.isChecked()) {
-                imageCapture.setFlashMode(ImageCapture.FLASH_MODE_ON);
-                camera.getCameraControl().enableTorch(true);
-            } else {
-                imageCapture.setFlashMode(ImageCapture.FLASH_MODE_OFF);
-                camera.getCameraControl().enableTorch(false);
-            }
-        });
-
-        //BOTON CAPTURAR
-        captura.setOnClickListener(v -> {
-
-            initialTime = System.currentTimeMillis(); //INICIO TIEMPO DE EJECUCION
-
-            mp.start(); //Sonido captura
-            showWorkInProgress(); //MOSTRAR BOTONES OCULTOS
-
-            //mViewModel.cancelWork(); //PARAR WORK MANAGER PARA NO TENER INTERFERENCIAS
-
-            if (textToSpeech.isSpeaking()) { //PARAR TTS
-                textToSpeech.stop();
-            }
-
-            System.out.println("CAPTURANDO!");
-
-            AlertDialog.Builder idiomaNoSoportado = new AlertDialog.Builder(this);
-            idiomaNoSoportado.setTitle("¿ REPRODUCIR ? ");
-            idiomaNoSoportado.setMessage("Si pulsas OK se reproducira el texto detectado.");
-
-            imageCapture.takePicture(executor, new ImageCapture.OnImageCapturedCallback() { //TOMAMOS LA FOTO
-                @Override
-                public void onCaptureSuccess(@NonNull ImageProxy image) {
-
-                    System.out.println("CAPTURADO!");
-                    Bitmap imagenBitmap = imageProxyToBitmap(image); //PASAMOS LA FOTO A BITMAP
-
-                    runOnUiThread(() -> {
-                        // TODO Auto-generated method stub
-                        imageView.setRotation(90); //EN PC SE VE GIRADO PERO EN MOVIL EN VERTICAL
-                        imageView.setImageBitmap(imagenBitmap); //SETEAMOS FOTO TOMADA
-                    });
-
-                    imagen = InputImage.fromBitmap(imagenBitmap, 90); //
-
-                    // COMIENZA DETECCION DE TEXTO EN IMAGEN (OCR)
-
-                    recognizer.process(imagen)
-                            .addOnSuccessListener(visionText -> {
-
-                                // Task completed successfully
-                                texto = visionText.getText();
-                                System.out.print("Este es el resultado: " + texto);
-
-
-                                //Gestion tiempo ejecucion
-                                long tFinal = System.currentTimeMillis();
-                                double tiempoEjecucion = (tFinal - initialTime) / 1000.0;
-
-
-                                //DETECTOR DE LENGUAJES
-                                languageIdentifier.identifyLanguage(texto).addOnSuccessListener(idioma -> {
-                                    System.out.println("IDIOMA: " + idioma);
-                                    Locale locale = new Locale(idioma, "ES"); //CREAMOS LOCALE PARA ASIGNAR IDIOMA A TTS
-
-                                    //SI OCR NO DETECTA NINGUN CARACTER
-                                    if (texto.isEmpty()) {
-                                        textToSpeech.setLanguage(new Locale("es", "ES"));
-                                        System.out.println("ENTRA DENTRO DE SPEAK SIN TEXTO");
-                                        textToSpeech.speak("No se ha detectado texto", TextToSpeech.QUEUE_FLUSH, null, null);
-
-                                        //SI TEXTO EN CASTELLANO O EUSKERA
-                                    } else if (idioma.equals("es")) {
-                                        if (textToSpeech != null) {
-                                            //ASIGNAMOS Lenguaje A TTS
-                                            textToSpeech.setLanguage(locale);
-
-                                            System.out.println("ENTRA DENTRO DE SPEAK ahotts");
-                                            textToSpeech.speak(texto, TextToSpeech.QUEUE_FLUSH, null, null);
-                                        }
-
-                                        //SI IDIOMA DISTINTO A CASTELLANO O EUSKERA
-                                    } else {
-                                        if (textToSpeech != null) {
-                                            //SI TEXTO EN INGLES O CATALAN
-                                            if (idioma.equals("en") || idioma.equals("ca")) {
-                                                textToSpeech.setLanguage(locale);
-                                                System.out.println("ENTRA DENTRO DE SPEAK google");
-                                                textToSpeech.speak(texto, TextToSpeech.QUEUE_FLUSH, null, null);
-                                            } else {
-                                                //NO SOPORTAR IDIOMA DIFERENTES A CATALAN/INGLES/EUSKERA/CASTELLANO
-                                                textToSpeech.setLanguage(new Locale("es", "ES"));
-                                                System.out.println("ENTRA DENTRO DE SPEAK IDIOMA NO SOPORTADO");
-                                                textToSpeech.speak("Idioma no soportado o desconocido ,¿ desea escuchar igualmente ?", TextToSpeech.QUEUE_FLUSH, null, null);
-
-                                                //SI NO SE DETECTA CORRECTAMENTE EL IDIOMA O NO ES SOPORTADO SE DA LA OPCION DE REPRODUCIR DE TODAS FORMAS
-                                                idiomaNoSoportado.setPositiveButton("OK", (dialog, which) -> {
-                                                    ttsErrorAux(texto); //REPRODUCIR IGUALMENTE
-                                                });
-                                                idiomaNoSoportado.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
-
-                                                AlertDialog dialog = idiomaNoSoportado.create(); //CREAR DIALOGO
-                                                dialog.show(); //MOSTRAR DIALOGO
-                                            }
-                                        }
-                                    }
-
-                                    //BOTON ANALISIS INTELIGENTE TEXTO
-
-                                    pause.setOnClickListener(new View.OnClickListener() {
-                                        @Override
-                                        public void onClick(View view) {
-                                            if (textToSpeech.isSpeaking()) { //PARAR TTS
-                                                textToSpeech.stop();
-                                            }
-                                            textToSpeech.setLanguage(new Locale("es"));
-                                            System.out.println("ENTRA DENTRO DE NAVEGACION");
-                                            textToSpeech.speak("NAVEGACION ACTIVADA", TextToSpeech.QUEUE_FLUSH, null, null);
-
-                                            processText(visionText);
-                                        }
-                                    });
-
-                                    //Mientras habla no quitar opcion de pause
-                                }).addOnCompleteListener(h -> {
-                                    System.out.println("COMPLETADO");
-                                }).addOnFailureListener(f -> {
-                                    System.out.println("FALLO");
-                                });
-
-                            })
-                            .addOnFailureListener(Throwable::printStackTrace);
-
-                    image.close(); //CERRAR IMAGEN (ARCHIVO TEMPORAL)
-
-                }
-
-                @Override
-                public void onError(@NonNull ImageCaptureException error) {
-                    error.printStackTrace();
-                    //CAPTURA FALLIDA REINICIAMOS
-                    startActivity(reinicio);
-                }
-
-            });
-        });
-
         //CAPTURA COLOR
         color.setOnClickListener(v -> {
             // Lógica para capturar una imagen cuando se presiona el botón "color"
             // Inicia la captura de imagen automáticamente al presionar el botón "color"
+
             stopImageUpdateTimer();
-            initialTime = System.currentTimeMillis(); // INICIO TIEMPO DE EJECUCION
             calcularYDecirColor();
-            progressBar.setVisibility(View.INVISIBLE);
             startImageUpdateTimer();
 
         });
+
+
+        startImageUpdateTimer();
+
     }
 
     // Método para obtener el color del píxel central de la vista previa de la cámara
-    private void getColorFromCameraPreview() {
-        // Obtener la vista previa de la cámara como un bitmap
-        Bitmap previewBitmap = mPreviewView.getBitmap();
-        // Escalar el bitmap para que coincida con las dimensiones de la burbuja
-        int targetWidth = burbuja.getWidth();
-        int targetHeight = burbuja.getHeight();
-        Bitmap scaledBitmap = Bitmap.createScaledBitmap(previewBitmap, targetWidth, targetHeight, true);
-        // Obtener el color del píxel central del bitmap escalado
-        centralPixelColor = scaledBitmap.getPixel(targetWidth / 2, targetHeight / 2);
-        // Establecer el color de fondo de la burbuja con el color del píxel central
-        runOnUiThread(() -> {
-            GradientDrawable drawable = (GradientDrawable) burbuja.getBackground();
-            drawable.setColor(centralPixelColor);
+    private void leerImageAnalysis() {
+        imageAnalysis.setAnalyzer(executor, imageProxy -> {
+            if (imageProxy != null) {
+                processImageProxy(imageProxy);
+                imageProxy.close();
+            }
         });
     }
+
 
     // Método para iniciar el temporizador y actualizar la imagen cada cierto intervalo de tiempo
     private void startImageUpdateTimer() {
         timer = new Timer();
         initializeTimerTask();
-        timer.schedule(timerTask, 0, 50);
+        timer.schedule(timerTask, 0, 100);
     }
 
     public void initializeTimerTask() {
@@ -535,7 +312,7 @@ public class CameraActivity extends AppCompatActivity {
             public void run() {
                 runOnUiThread(new Runnable() {
                     public void run() {
-                        getColorFromCameraPreview(); // Método para actualizar el color de la burbuja
+                        leerImageAnalysis(); // Método para actualizar el color del cuadrado
                     }
                 });
             }
@@ -546,6 +323,7 @@ public class CameraActivity extends AppCompatActivity {
     private void stopImageUpdateTimer() {
         if (timer != null) {
             timer.cancel();
+            timerTask.cancel();
             timer = null;
         }
     }
@@ -578,89 +356,68 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
-    //CONVERSION DE PROXY A BITMAP
-    private Bitmap imageProxyToBitmap(ImageProxy image) {
-        ImageProxy.PlaneProxy planeProxy = image.getPlanes()[0];
-        ByteBuffer buffer = planeProxy.getBuffer();
-        byte[] bytes = new byte[buffer.remaining()];
-        buffer.get(bytes);
+    private void processImageProxy(ImageProxy imageProxy) {
 
-        return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-    }
+        if (imageProxy.getFormat() == ImageFormat.YUV_420_888) {
+            // Obtener el buffer del plano Y (luminosidad)
+            ImageProxy.PlaneProxy yPlane = imageProxy.getPlanes()[0];
+            ByteBuffer yBuffer = yPlane.getBuffer();
 
-    //MOSTRAR BOTONES OCULTOS
-    private void showWorkInProgress() {
-        progressBar.setVisibility(View.VISIBLE);
-        stop.setVisibility(View.VISIBLE);
+            // Obtener las dimensiones de la imagen
+            int width = imageProxy.getWidth();
+            int height = imageProxy.getHeight();
 
-    }
+            // Calcular las coordenadas del píxel central
+            int centerX = width / 2 - 125;
+            int centerY = height / 2;
 
-    //OBTENER POSIBLES LENGUAJES DETECTADOS
-    private void getPossibleLanguuages(String text) {
-        // [START get_possible_languages]
-        LanguageIdentifier languageIdentifier =
-                LanguageIdentification.getClient();
-        languageIdentifier.identifyPossibleLanguages(text)
-                .addOnSuccessListener(identifiedLanguages -> {
-                    for (IdentifiedLanguage identifiedLanguage : identifiedLanguages) {
-                        String language = identifiedLanguage.getLanguageTag();
-                        float confidence = identifiedLanguage.getConfidence();
-                        Log.i(TAG, language + " (" + confidence + ")");
-                    }
-                })
-                .addOnFailureListener(
-                        e -> {
-                            // Model couldn’t be loaded or other internal error.
-                            // ...
-                        });
-        // [END get_possible_languages]
+            // Obtener el índice del píxel central en el buffer Y
+            int yIndex = centerY * yPlane.getRowStride() + centerX * yPlane.getPixelStride();
+            int y = yBuffer.get(yIndex) & 0xFF;
 
-    }
+            // Obtener el buffer del plano U y V (croma)
+            ImageProxy.PlaneProxy uPlane = imageProxy.getPlanes()[1];
+            ImageProxy.PlaneProxy vPlane = imageProxy.getPlanes()[2];
+            ByteBuffer uBuffer = uPlane.getBuffer();
+            ByteBuffer vBuffer = vPlane.getBuffer();
 
-    private void ttsErrorAux(String texto) {
-        if (textToSpeech.isSpeaking()) {
-            textToSpeech.stop();
+            // Calcular las coordenadas del píxel central para los planos U y V
+            int uvCenterX = centerX / 2;
+            int uvCenterY = centerY / 2;
+            int uvIndex = uvCenterY * uPlane.getRowStride() + uvCenterX * uPlane.getPixelStride();
+
+            // Obtener los valores U y V del píxel central
+            int u = uBuffer.get(uvIndex) & 0xFF;
+            int v = vBuffer.get(uvIndex) & 0xFF;
+
+            // Convertir los valores YUV a RGB
+            int rgb = yuvToRgb(y, u, v);
+
+            // Obtener los componentes de color individuales
+            int rojo = Color.red(rgb);
+            int verde = Color.green(rgb);
+            int azul = Color.blue(rgb);
+
+            centralPixelColor = Color.rgb(rojo, verde, azul);
+
+            runOnUiThread(() -> {
+                GradientDrawable drawable = (GradientDrawable) burbuja.getBackground();
+                drawable.setColor(centralPixelColor);
+            });
         }
-        textToSpeech.setLanguage(new Locale("es"));
-        textToSpeech.speak(texto, TextToSpeech.QUEUE_FLUSH, null, null);
     }
 
-    private void processText(Text result) {
-        String resultText = result.getText();
-        List<Text.TextBlock> bloques = result.getTextBlocks();
-        contador = 0;
-        next.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Text.TextBlock bloque = bloques.get(contador);
-                String texto = bloque.getText();
-                String idioma = bloque.getRecognizedLanguage();
-                textToSpeech.setLanguage(new Locale(idioma));
-                textToSpeech.speak(texto, TextToSpeech.QUEUE_FLUSH, null, null);
+    private int yuvToRgb(int y, int u, int v) {
+        int r = y + (int) (1.370705 * (v - 128));
+        int g = y - (int) (0.698001 * (v - 128)) - (int) (0.337633 * (u - 128));
+        int b = y + (int) (1.732446 * (u - 128));
 
-                if (contador == bloques.size() - 1) {
-                    contador = bloques.size() - 1;
-                } else {
-                    contador = contador + 1;
-                }
-            }
-        });
-        atras.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Text.TextBlock bloque = bloques.get(contador);
-                String texto = bloque.getText();
-                String idioma = bloque.getRecognizedLanguage();
-                textToSpeech.setLanguage(new Locale(idioma));
-                textToSpeech.speak(texto, TextToSpeech.QUEUE_FLUSH, null, null);
-                if (contador == 0) {
-                    contador = 0;
-                } else {
-                    contador = contador - 1;
-                }
-            }
-        });
+        r = Math.max(0, Math.min(255, r));
+        g = Math.max(0, Math.min(255, g));
+        b = Math.max(0, Math.min(255, b));
 
+        return Color.rgb(r, g, b);
     }
+
 
 }

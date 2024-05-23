@@ -8,22 +8,26 @@ public class ClasificadorDeColor {
         String colorPrincipal = getColorPrincipal(hsl);
         if (!colorPrincipal.equals("Negro") && !colorPrincipal.equals("Blanco")) {
             if (isMuchMoreLight(hsl)) {
-                tono = " Muy Claro Casi Blanco";
+                tono = ", Muy Claro Casi Blanco";
             } else if (isMuchMoreDark(hsl)) {
-                tono = " Muy Oscuro Casi Negro";
+                tono = ", Muy Oscuro Casi Negro";
             } else if (isMoreLight(hsl)) {
-                tono = " Muy Claro";
+                tono = ", Muy Claro";
             } else if (isMoreDark(hsl)) {
-                tono = " Muy Oscuro";
+                tono = ", Muy Oscuro";
             } else if (isLight(hsl)) {
-                tono = " Claro";
+                tono = ", Claro";
             } else if (isDark(hsl)) {
-                tono = " Oscuro";
+                tono = ", Oscuro";
+            } else if (isBitLight(hsl)) {
+                tono = ", un poco Claro";
+            } else if (isBitDark(hsl)) {
+                tono = ", un poco Oscuro";
             }
         }
 
 
-        return colorPrincipal + tono;
+        return "Color " + colorPrincipal + tono;
     }
 
     private static float[] rgbToHsl(int r, int g, int b) {
@@ -63,8 +67,8 @@ public class ClasificadorDeColor {
         float saturation = hsl[1];
         float lightness = hsl[2];
 
-        if (lightness < 0.15) return "Negro";
-        if (saturation < 0.16 && lightness > 0.75) return "Blanco";
+        if (saturation < 0.17 && lightness < 0.15) return "Negro";
+        if (saturation < 0.17 && lightness > 0.75) return "Blanco";
         if (saturation < 0.13) return "Gris";
 
         // Rango para Marrón
@@ -80,7 +84,7 @@ public class ClasificadorDeColor {
         if (hue >= 75 && hue < 90) return "Verde Lima";
         if (hue >= 90 && hue < 135) return "Verde";
         if (hue >= 135 && hue < 165) return "Turquesa";
-        if (hue >= 165 && hue < 195) return "Cyan";
+        if (hue >= 165 && hue < 195) return "Cián";
         if (hue >= 195 && hue < 215) return "Azul Celeste";
         if (hue >= 215 && hue < 230) return "Azul";
         if (hue >= 230 && hue < 255) return "Azul Marino";
@@ -96,34 +100,44 @@ public class ClasificadorDeColor {
         return "Color no reconocido";
     }
 
-    private static boolean isLight(float[] hsl) {
+    private static boolean isBitLight(float[] hsl) {
         float lightness = hsl[2];
-        return lightness > 0.6;
+        return lightness > 0.68;
     }
 
-    private static boolean isMoreLight(float[] hsl) {
+    private static boolean isLight(float[] hsl) {
         float lightness = hsl[2];
         return lightness > 0.70;
     }
 
-    private static boolean isMuchMoreLight(float[] hsl) {
+    private static boolean isMoreLight(float[] hsl) {
         float lightness = hsl[2];
-        return lightness > 0.75;
+        return lightness > 0.73;
     }
 
-    private static boolean isDark(float[] hsl) {
+    private static boolean isMuchMoreLight(float[] hsl) {
+        float lightness = hsl[2];
+        return lightness > 75;
+    }
+
+    private static boolean isBitDark(float[] hsl) {
         float lightness = hsl[2];
         return lightness < 0.35;
     }
 
+    private static boolean isDark(float[] hsl) {
+        float lightness = hsl[2];
+        return lightness < 0.24;
+    }
+
     private static boolean isMoreDark(float[] hsl) {
         float lightness = hsl[2];
-        return lightness < 0.25;
+        return lightness < 0.20;
     }
 
     private static boolean isMuchMoreDark(float[] hsl) {
         float lightness = hsl[2];
-        return lightness < 0.21;
+        return lightness < 0.17;
     }
 }
 
