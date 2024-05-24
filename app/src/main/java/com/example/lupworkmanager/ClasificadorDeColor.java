@@ -1,8 +1,15 @@
 package com.example.lupworkmanager;
 
+import android.graphics.Color;
+
 public class ClasificadorDeColor {
 
-    public static String clasificador(int r, int g, int b) {
+    public static String clasificador(int color) {
+
+        int r = Color.red(color);
+        int g = Color.green(color);
+        int b = Color.blue(color);
+
         float[] hsl = rgbToHsl(r, g, b);
         String tono = "";
         String colorPrincipal = getColorPrincipal(hsl);
@@ -29,6 +36,7 @@ public class ClasificadorDeColor {
 
         return "Color " + colorPrincipal + tono;
     }
+
 
     private static float[] rgbToHsl(int r, int g, int b) {
         float rf = r / 255f;
@@ -75,9 +83,9 @@ public class ClasificadorDeColor {
         if (hue >= 20 && hue < 40 && saturation > 0.2 && saturation < 0.7 && lightness < 0.6)
             return "Marrón";
 
-        if (hue < 15) return "Rojo";
-        if (hue >= 15 && hue < 25) return "Rojo Anaranjado";
-        if (hue >= 25 && hue < 35) return "Naranja";
+        if (hue < 10 || hue >= 350) return "Rojo";
+        if (hue >= 10 && hue < 20) return "Rojo Anaranjado";
+        if (hue >= 20 && hue < 35) return "Naranja";
         if (hue >= 35 && hue < 40) return "Amarillo ocre";
         if (hue >= 40 && hue < 55) return "Amarillo";
         if (hue >= 55 && hue < 75) return "Verde Pistacho";
@@ -95,24 +103,23 @@ public class ClasificadorDeColor {
         if (hue >= 315 && hue < 335) return "Fucsia";
         if (hue >= 335 && hue < 340) return "Fucsia intenso";
         if (hue >= 340 && hue < 350) return "Rojo Fucsia";
-        if (hue >= 350) return "Rojo";
 
         return "Color no reconocido";
     }
 
     private static boolean isBitLight(float[] hsl) {
         float lightness = hsl[2];
-        return lightness > 0.45;
+        return lightness > 0.60;
     }
 
     private static boolean isLight(float[] hsl) {
         float lightness = hsl[2];
-        return lightness > 0.55;
+        return lightness > 0.65;
     }
 
     private static boolean isMoreLight(float[] hsl) {
         float lightness = hsl[2];
-        return lightness > 0.65;
+        return lightness > 0.70;
     }
 
     private static boolean isTooLight(float[] hsl) {

@@ -162,6 +162,8 @@
 
         <ImageView
             android:id="@+id/zoomOut"
+            android:clickable="true"
+            android:focusable="true"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_marginStart="12dp"
@@ -173,6 +175,8 @@
 
         <SeekBar
             android:id="@+id/zoomSeekBar"
+            android:clickable="true"
+            android:focusable="true"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:max="10"
@@ -183,6 +187,8 @@
 
         <ImageView
             android:id="@+id/zoomIn"
+            android:clickable="true"
+            android:focusable="true"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_marginEnd="12dp"

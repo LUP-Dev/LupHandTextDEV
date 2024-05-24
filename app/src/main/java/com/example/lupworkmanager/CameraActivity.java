@@ -1,7 +1,6 @@
 package com.example.lupworkmanager;
 
 import static com.example.lupworkmanager.ClasificadorDeColor.clasificador;
-import static com.example.lupworkmanager.R.id.flashBoton;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -20,6 +19,7 @@ import android.view.Surface;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -107,7 +107,9 @@ public class CameraActivity extends AppCompatActivity {
     private TimerTask timerTask;
     private ImageAnalysis imageAnalysis;
 
-    private ImageView flash;
+    private ImageView flash, zoomMenos, zoomMas;
+
+    private SeekBar zoomBarra;
 
     //OCULTAR BOTONES OCULTOS
     private static void showWorkFinished() {
@@ -226,7 +228,10 @@ public class CameraActivity extends AppCompatActivity {
 
         burbuja = findViewById(R.id.color_bubble);
         cuadrado = findViewById(R.id.cuadradoFoco);
-        flash = findViewById(flashBoton);
+        flash = findViewById(R.id.flashBoton);
+        zoomMenos = findViewById(R.id.zoomOut);
+        zoomBarra = findViewById(R.id.zoomSeekBar);
+        zoomMas = findViewById(R.id.zoomIn);
         mPreviewView = findViewById(R.id.camera);
 
 
@@ -293,14 +298,57 @@ public class CameraActivity extends AppCompatActivity {
         //CAPTURA COLOR
         color.setOnClickListener(v -> {
 
-            calcularYDecirColor();
+            pronunciarTexto(clasificador(centralPixelColor));
 
         });
+
+        //ZOOM
+        zoomBarra.setMax(100); // Configuramos el máximo de la barra de zoom
+
+        // Obtener la relación de zoom mínima y máxima
+        float minZoom = infoCamara.getZoomState().getValue().getMinZoomRatio();
+        float maxZoom = infoCamara.getZoomState().getValue().getMaxZoomRatio();
+
+        zoomBarra.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    float zoomRatio = minZoom + (maxZoom - minZoom) * (progress / 100.0f);
+                    camera.getCameraControl().setZoomRatio(zoomRatio);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                // No se necesita implementar
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                // No se necesita implementar
+            }
+        });
+
+        zoomMenos.setOnClickListener(v -> {
+            float currentZoom = infoCamara.getZoomState().getValue().getZoomRatio();
+            float newZoom = Math.max(minZoom, currentZoom - (maxZoom - minZoom) / 10.0f);
+            camera.getCameraControl().setZoomRatio(newZoom);
+            zoomBarra.setProgress((int) ((newZoom - minZoom) / (maxZoom - minZoom) * 100));
+        });
+
+        zoomMas.setOnClickListener(v -> {
+            float currentZoom = infoCamara.getZoomState().getValue().getZoomRatio();
+            float newZoom = Math.min(maxZoom, currentZoom + (maxZoom - minZoom) / 10.0f);
+            camera.getCameraControl().setZoomRatio(newZoom);
+            zoomBarra.setProgress((int) ((newZoom - minZoom) / (maxZoom - minZoom) * 100));
+        });
+
 
         //Empieza a actualizar la burbuja cada cierto tiempo
         startImageUpdateTimer();
 
     }
+
 
     // Método para obtener el color del píxel central de la vista previa de la cámara
     private void leerImageAnalysis() {
@@ -339,25 +387,6 @@ public class CameraActivity extends AppCompatActivity {
             timerTask.cancel();
             timer = null;
         }
-    }
-
-
-    private void calcularYDecirColor() {
-
-        // Pronuncia la etiqueta de color utilizando el motor de texto a voz (TTS)
-        pronunciarTexto(obtenerColor());
-    }
-
-    // Método para calcular el color promedio de una imagen
-    private String obtenerColor() {
-
-
-        // Obtiene los componentes de color individuales
-        int rojo = Color.red(centralPixelColor);
-        int verde = Color.green(centralPixelColor);
-        int azul = Color.blue(centralPixelColor);
-
-        return clasificador(rojo, verde, azul);
     }
 
 
@@ -421,6 +450,7 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
+    //Transformar color YUV a RGB
     private int yuvToRgb(int y, int u, int v) {
         int r = y + (int) (1.370705 * (v - 128));
         int g = y - (int) (0.698001 * (v - 128)) - (int) (0.337633 * (u - 128));
