@@ -83,7 +83,13 @@ public class ClasificadorDeColor {
         if (hue >= 20 && hue < 40 && saturation > 0.2 && saturation < 0.7 && lightness < 0.6)
             return "Marrón";
 
-        if (hue < 10 || hue >= 350) return "Rojo";
+        if (hue < 10 || hue >= 350) {
+            if (lightness <= 0.3) {
+                return "Granate";
+            } else {
+                return "Rojo";
+            }
+        }
         if (hue >= 10 && hue < 20) return "Rojo Anaranjado";
         if (hue >= 20 && hue < 35) return "Naranja";
         if (hue >= 35 && hue < 40) return "Amarillo ocre";
