@@ -14,6 +14,7 @@ public class ClasificadorDeColor {
         String tono = "";
         String colorPrincipal = getColorPrincipal(hsl);
         if (!colorPrincipal.equals("Negro") && !colorPrincipal.equals("Blanco")) {
+            //Determinamos intensidad
             if (isTooLight(hsl)) {
                 tono = ", Muy Claro Casi Blanco";
             } else if (isTooDark(hsl)) {
@@ -37,7 +38,7 @@ public class ClasificadorDeColor {
         return "Color " + colorPrincipal + tono;
     }
 
-
+    //Transformar color de RGB a HSL
     private static float[] rgbToHsl(int r, int g, int b) {
         float rf = r / 255f;
         float gf = g / 255f;
